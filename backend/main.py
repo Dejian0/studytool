@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query, UploadFile
+import os
+
+from fastapi import FastAPI, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -28,6 +30,12 @@ from lib.filesystem import (
     write_prompt,
 )
 from lib.pdf_viewer import extract_page_text, get_page_count, render_page
+from lib.notes_pipeline import (
+    get_job_status,
+    is_job_running,
+    start_core_principles,
+    start_lecture_notes,
+)
 
 ensure_base_dirs()
 
@@ -52,10 +60,24 @@ class CreateCourseRequest(BaseModel):
 class UpdatePromptRequest(BaseModel):
     content: str
 
+class GenerateRequest(BaseModel):
+    model: str = "gpt-4o"
+
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _resolve_api_key(header_key: str | None) -> str:
+    """Return the API key from the request header or environment, or raise 400."""
+    key = header_key or os.environ.get("OPENAI_API_KEY", "")
+    if not key:
+        raise HTTPException(
+            status_code=400,
+            detail="No API key provided. Set OPENAI_API_KEY in .env or pass X-OpenAI-Key header.",
+        )
+    return key
+
 
 def _require_course(course: str) -> Path:
     """Return the course directory or raise 404."""
@@ -191,29 +213,64 @@ def get_note(course: str, filename: str):
 
 
 # ---------------------------------------------------------------------------
-# AI / Chat stubs (shape defined now, implementation in Phase 5+)
+# AI / Chat stubs (Phase 7)
 # ---------------------------------------------------------------------------
 
 @app.post("/api/chat")
 def post_chat():
-    raise HTTPException(status_code=501, detail="Chat endpoint not yet implemented (Phase 5)")
+    raise HTTPException(status_code=501, detail="Chat endpoint not yet implemented (Phase 7)")
 
 
 @app.get("/api/providers")
 def get_providers():
-    raise HTTPException(status_code=501, detail="Providers endpoint not yet implemented (Phase 5)")
+    raise HTTPException(status_code=501, detail="Providers endpoint not yet implemented (Phase 7)")
 
 
-@app.post("/api/generate-notes/{course}/{filename}")
-def post_generate_notes(course: str, filename: str):
-    raise HTTPException(status_code=501, detail="Generate notes not yet implemented (Phase 6)")
+# ---------------------------------------------------------------------------
+# Batch generation (Phase 6)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/generate-notes/{course}/{filename}", status_code=202)
+def post_generate_notes(
+    course: str,
+    filename: str,
+    body: GenerateRequest | None = None,
+    x_openai_key: str | None = Header(default=None),
+):
+    _require_pdf(course, filename)
+    if is_job_running("notes", course, filename):
+        raise HTTPException(status_code=409, detail="Generation already in progress")
+
+    api_key = _resolve_api_key(x_openai_key)
+    model = body.model if body else "gpt-4o"
+    start_lecture_notes(course, filename, api_key, model)
+    return {"status": "started"}
 
 
 @app.get("/api/generate-notes/{course}/{filename}/status")
 def get_generate_notes_status(course: str, filename: str):
-    raise HTTPException(status_code=501, detail="Generate notes status not yet implemented (Phase 6)")
+    _require_pdf(course, filename)
+    return get_job_status("notes", course, filename)
 
 
-@app.post("/api/generate-principles/{course}/{filename}")
-def post_generate_principles(course: str, filename: str):
-    raise HTTPException(status_code=501, detail="Generate principles not yet implemented (Phase 6)")
+@app.get("/api/generate-principles/{course}/{filename}/status")
+def get_generate_principles_status(course: str, filename: str):
+    _require_pdf(course, filename)
+    return get_job_status("principles", course, filename)
+
+
+@app.post("/api/generate-principles/{course}/{filename}", status_code=202)
+def post_generate_principles(
+    course: str,
+    filename: str,
+    body: GenerateRequest | None = None,
+    x_openai_key: str | None = Header(default=None),
+):
+    _require_pdf(course, filename)
+    if is_job_running("principles", course, filename):
+        raise HTTPException(status_code=409, detail="Generation already in progress")
+
+    api_key = _resolve_api_key(x_openai_key)
+    model = body.model if body else "gpt-4o"
+    start_core_principles(course, filename, api_key, model)
+    return {"status": "started"}

@@ -116,7 +116,7 @@ This comes from PyMuPDF's `page.get_text("dict")`. The `bbox` is `[x0, y0, x1, y
 | `GET` | `/api/courses/{course}/notes` | List note filenames. |
 | `GET` | `/api/courses/{course}/notes/{filename}` | Read a note file (returns markdown text). |
 
-#### AI / Chat (comes in Phase 5, but define the shape now)
+#### AI / Chat (implemented in Phases 6 & 7 using OpenAI directly; Phase 5 skipped)
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/api/chat` | Send a chat message. Body includes the message, optional image (base64 crop), context metadata (course, PDF, page, selected text). Streams the response back via SSE (Server-Sent Events). |
@@ -232,7 +232,9 @@ The app has a single-page layout with three regions:
 
 ---
 
-## Phase 5: Multi-Provider LLM Backend
+## Phase 5: Multi-Provider LLM Backend ⏭️ Skipped
+
+> **Skipped**: This phase is a cost/flexibility optimization, not a functional requirement. Phases 6 and 7 use the existing OpenAI integration in `lib/ai.py` directly. Multi-provider support (Gemini free tier, Ollama) can be added later as a standalone enhancement without affecting any other phase.
 
 **Goal**: Support multiple LLM providers so the user isn't locked into paying for OpenAI API calls. Gemini's free tier becomes the default for interactive Q&A.
 
@@ -277,6 +279,8 @@ Each provider (OpenAI, Gemini, Ollama) implements this interface. The `/api/chat
 ## Phase 6: Batch Lecture Notes Pipeline
 
 **Goal**: Generate deep, professor-quality explanations for every slide in a lecture, one slide at a time. This is a one-time process per lecture PDF. The output is a saved markdown file.
+
+> **Note**: With Phase 5 skipped, this phase uses the existing OpenAI client in `lib/ai.py` directly. OpenAI is the recommended provider for batch generation anyway (quality matters here). The `/api/providers` endpoint is not needed; API key comes from `.env` or request headers.
 
 ### Pipeline logic
 
@@ -346,6 +350,8 @@ This is a **text-only** call (no images needed, since the lecture notes already 
 
 **Goal**: A chat panel where the user asks questions. Context is assembled automatically from pre-generated notes, selected text, and optional image crops.
 
+> **Note**: With Phase 5 skipped, the chat backend uses the OpenAI client directly from `lib/ai.py`. The provider/model selector in the UI is simplified to an OpenAI model dropdown. Multi-provider support can be added later without changing the chat panel's architecture.
+
 ### Layout
 
 The chat panel is a collapsible column on the right side of the slide viewer (see the layout diagram in Phase 2). It contains:
@@ -412,18 +418,18 @@ This means most Q&A is **text-only** (just the lecture notes + selected text + q
 | 1 | Phase 1 | FastAPI backend (core endpoints: courses, slides, text extraction) | -- |
 | 2 | Phase 2 | React frontend (core viewer: sidebar, slide display, navigation) | Phase 1 |
 | 3 | Phase 3 | Text extraction overlay (clickable text blocks on slides) | Phase 1, 2 |
-| 4 | Phase 5 | Multi-provider LLM backend (Gemini, OpenAI, Ollama abstraction) | Phase 1 |
-| 5 | Phase 7 | Chat panel + interactive Q&A | Phase 2, 3, 5 |
-| 6 | Phase 6 | Batch lecture notes + core principles generation | Phase 5 |
-| 7 | Phase 4 | Region crop tool (draw-to-select on slides) | Phase 2, 7 |
-| 8 | Phase 8 | Docker Compose setup | Phase 1, 2 |
+| ~~4~~ | ~~Phase 5~~ | ~~Multi-provider LLM backend (Gemini, OpenAI, Ollama abstraction)~~ | ~~Phase 1~~ |
+| 4 | Phase 6 | Batch lecture notes + core principles generation (uses OpenAI directly) | Phase 1 |
+| 5 | Phase 7 | Chat panel + interactive Q&A (uses OpenAI directly) | Phase 2, 3, 6 |
+| 6 | Phase 4 | Region crop tool (draw-to-select on slides) | Phase 2, 7 |
+| 7 | Phase 8 | Docker Compose setup | Phase 1, 2 |
 
 ### Why this order
 - The backend and frontend core come first because everything depends on them.
 - Text overlay comes early because it's the foundation for the "click to ask" interaction.
-- Multi-provider LLM is needed before any AI features go live.
-- Chat panel comes before batch notes because it's immediately useful for studying even without pre-generated notes.
-- Batch notes generation is high-value but the app is usable without it.
+- ~~Multi-provider LLM is needed before any AI features go live.~~ Phase 5 (multi-provider) is skipped -- all AI features use the existing OpenAI integration in `lib/ai.py` directly.
+- Batch lecture notes come next since they produce the context that makes the chat panel most useful.
+- Chat panel follows, using pre-generated notes and OpenAI for interactive Q&A.
 - Region crop is a polish feature that adds diagram/graph interaction last.
 - Docker comes last because it's packaging, not functionality. Adding it too early just slows down the dev loop.
 

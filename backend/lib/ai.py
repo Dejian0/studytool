@@ -56,6 +56,17 @@ def stream_chat(
             yield delta.content
 
 
+def chat_sync(
+    api_key: str,
+    model: str,
+    messages: list[dict],
+) -> str:
+    """Send a chat completion and return the full response text (non-streaming)."""
+    client = OpenAI(api_key=api_key)
+    response = client.chat.completions.create(model=model, messages=messages)
+    return response.choices[0].message.content or ""
+
+
 def analyze_exams(
     api_key: str,
     model: str,

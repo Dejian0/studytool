@@ -10,9 +10,10 @@ import CropPreview from '../RegionCrop/CropPreview';
 interface Props {
   course: string;
   filename: string;
+  onSwitchToNotes?: () => void;
 }
 
-export default function SlideViewer({ course, filename }: Props) {
+export default function SlideViewer({ course, filename, onSwitchToNotes }: Props) {
   const [page, setPage] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [pageInput, setPageInput] = useState('1');
@@ -315,6 +316,21 @@ export default function SlideViewer({ course, filename }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 2.5H3.5A1 1 0 0 0 2.5 3.5V7M13 2.5h3.5A1 1 0 0 1 17.5 3.5V7M17.5 13v3.5a1 1 0 0 1-1 1H13M2.5 13v3.5a1 1 0 0 0 1 1H7" />
             </svg>
           </button>
+
+          {onSwitchToNotes && (
+            <>
+              <div className="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
+              <button
+                onClick={onSwitchToNotes}
+                className="rounded p-1 text-zinc-600 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                title="Lecture Notes"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </>
+          )}
 
           <span className="ml-2 truncate text-xs text-zinc-400 dark:text-zinc-600">{filename}</span>
         </nav>

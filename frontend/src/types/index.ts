@@ -22,3 +22,15 @@ export interface PageText {
   height: number;
   blocks: TextBlock[];
 }
+
+export interface GenerateStatus {
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  current_slide: number;
+  total_slides: number;
+  error: string | null;
+}
+
+export interface NoteContent {
+  filename: string;
+  content: string;
+}
