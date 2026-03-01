@@ -1,0 +1,4 @@
+streamlit>=1.40.0
+PyMuPDF>=1.25.0
+openai>=1.60.0
+python-dotenv>=1.0.0  # optional: enables .env file support
