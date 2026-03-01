@@ -10,9 +10,15 @@ env/
 
 # Environment / secrets
 .env
+.env.local
+.env.*.local
 
 # Project runtime data
 courses/
+
+# Node / Frontend
+node_modules/
+frontend/dist/
 
 # IDE
 .vscode/

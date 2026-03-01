@@ -157,95 +157,102 @@ if courses and selected_course:
         st.session_state.messages = []
 
 # ---------------------------------------------------------------------------
-# Main area -- two-column split
+# Main area -- slide-focused layout with toggleable AI Hub
 # ---------------------------------------------------------------------------
 if not courses:
     st.info("Create a course in the sidebar to get started.")
     st.stop()
 
-left_col, right_col = st.columns(2)
+pdf_files = list_files(selected_course, "slides", ".pdf")
 
-# ---- Left column: PDF Viewer ------------------------------------------------
-with left_col:
-    st.subheader("Slide Viewer")
+if not pdf_files:
+    st.info(f"No PDFs in **{selected_course}/slides/**. Drop some in to begin.")
+    st.stop()
 
-    pdf_files = list_files(selected_course, "slides", ".pdf")
+# -- Compact toolbar ----------------------------------------------------------
+tb_pdf, tb_toggle = st.columns([5, 1])
+with tb_pdf:
+    chosen_pdf = st.selectbox("Select PDF", pdf_files, key="pdf_select")
+with tb_toggle:
+    show_hub = st.toggle("AI Hub")
 
-    if not pdf_files:
-        st.info(f"No PDFs in **{selected_course}/slides/**. Drop some in to begin.")
-    else:
-        chosen_pdf = st.selectbox("Select PDF", pdf_files, key="pdf_select")
+if st.session_state.ctx_pdf != chosen_pdf:
+    st.session_state.ctx_pdf = chosen_pdf
+    st.session_state.messages = []
 
-        if st.session_state.ctx_pdf != chosen_pdf:
-            st.session_state.ctx_pdf = chosen_pdf
-            st.session_state.messages = []
+pdf_path = get_file_path(selected_course, "slides", chosen_pdf)
+total_pages = get_page_count(pdf_path)
 
-        pdf_path = get_file_path(selected_course, "slides", chosen_pdf)
-        total_pages = get_page_count(pdf_path)
-
-        p1, p2 = st.columns(2)
-        with p1:
-            start_page = st.number_input(
-                "Start page", min_value=1, max_value=total_pages, value=1
-            )
-        with p2:
-            end_page = st.number_input(
-                "End page",
-                min_value=1,
-                max_value=total_pages,
-                value=min(5, total_pages),
-            )
-
-        if start_page > end_page:
-            st.warning("Start page must be <= End page.")
-        else:
-            images = render_pages(pdf_path, start_page, end_page)
-            for idx, img_bytes in enumerate(images):
-                st.image(
-                    img_bytes,
-                    caption=f"Page {start_page + idx}",
-                    use_container_width=True,
-                )
-
-# ---- Right column: AI Hub ---------------------------------------------------
-with right_col:
-    st.subheader("AI Hub")
-
-    hub_prompts = list_prompts()
-    active_prompt = st.selectbox(
-        "System prompt",
-        hub_prompts,
-        key="hub_prompt",
-    )
-
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(convert_latex_delimiters(msg["content"]))
-
-    if not api_key:
-        st.warning("Enter your OpenAI API key in the sidebar to start chatting.")
-    elif not pdf_files:
-        st.info("Select a PDF on the left to provide context for the chat.")
-    elif user_input := st.chat_input("Ask about the slides…"):
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user"):
-            st.markdown(user_input)
-
-        context_images = render_pages(pdf_path, start_page, end_page)
-        image_blocks = encode_images(context_images)
-
-        system_text = read_prompt(active_prompt)
-        api_messages = build_messages(
-            system_text, st.session_state.messages[:-1], user_input, image_blocks
+with st.expander("Page range"):
+    p1, p2 = st.columns(2)
+    with p1:
+        start_page = st.number_input(
+            "Start page", min_value=1, max_value=total_pages, value=1
+        )
+    with p2:
+        end_page = st.number_input(
+            "End page",
+            min_value=1,
+            max_value=total_pages,
+            value=min(5, total_pages),
         )
 
-        with st.chat_message("assistant"):
-            placeholder = st.empty()
-            full_response = ""
-            for chunk in stream_chat(api_key, selected_model, api_messages):
-                full_response += chunk
-                placeholder.markdown(convert_latex_delimiters(full_response))
+if start_page > end_page:
+    st.warning("Start page must be <= End page.")
+    st.stop()
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": full_response}
+# -- Conditional layout -------------------------------------------------------
+if show_hub:
+    slide_col, hub_col = st.columns([1.85, 1])
+else:
+    slide_col = st.container()
+
+with slide_col:
+    images = render_pages(pdf_path, start_page, end_page)
+    for idx, img_bytes in enumerate(images):
+        st.image(
+            img_bytes,
+            caption=f"Page {start_page + idx}",
+            use_container_width=True,
         )
+
+if show_hub:
+    with hub_col:
+        st.subheader("AI Hub")
+
+        hub_prompts = list_prompts()
+        active_prompt = st.selectbox(
+            "System prompt",
+            hub_prompts,
+            key="hub_prompt",
+        )
+
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(convert_latex_delimiters(msg["content"]))
+
+        if not api_key:
+            st.warning("Enter your OpenAI API key in the sidebar to start chatting.")
+        elif user_input := st.chat_input("Ask about the slides…"):
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            with st.chat_message("user"):
+                st.markdown(user_input)
+
+            context_images = render_pages(pdf_path, start_page, end_page)
+            image_blocks = encode_images(context_images)
+
+            system_text = read_prompt(active_prompt)
+            api_messages = build_messages(
+                system_text, st.session_state.messages[:-1], user_input, image_blocks
+            )
+
+            with st.chat_message("assistant"):
+                placeholder = st.empty()
+                full_response = ""
+                for chunk in stream_chat(api_key, selected_model, api_messages):
+                    full_response += chunk
+                    placeholder.markdown(convert_latex_delimiters(full_response))
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": full_response}
+            )
