@@ -185,7 +185,7 @@ The app has a single-page layout with three regions:
 
 ---
 
-## Phase 3: Text Extraction Overlay
+## Phase 3: Text Extraction Overlay ✅ Done
 
 **Goal**: Make text on slides selectable, copyable, and clickable.
 
@@ -210,7 +210,7 @@ The app has a single-page layout with three regions:
 
 ---
 
-## Phase 4: Region Crop Tool
+## Phase 4: Region Crop Tool ✅ Done
 
 **Goal**: Let the user draw a rectangle on a slide to select a visual region (graph, diagram, figure) and ask the AI about it.
 
