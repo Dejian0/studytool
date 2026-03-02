@@ -31,6 +31,31 @@ DEFAULT_PROMPTS: dict[str, str] = {
         "images to keep the dialogue grounded. Only reveal the answer if the "
         "student is clearly stuck after several attempts."
     ),
+    "slide_explanation_instructions.txt": (
+        "Explain this slide in depth as if you are a professor delivering a "
+        "live lecture. Reference the content of the slide directly. Build on "
+        "what was covered in previous slides where relevant.\n\n"
+        "After your explanation, add an HTML comment on its own line with a "
+        "2-3 sentence summary of the key points from THIS slide only, using "
+        "this exact format:\n"
+        "<!-- CONTEXT: Your 2-3 sentence summary here -->"
+    ),
+    "core_principles_system.txt": (
+        "You are an expert engineering professor creating a concise reference "
+        "sheet for students. Use $...$ for inline math and $$...$$ for display "
+        "equations. Output well-structured Markdown."
+    ),
+    "core_principles_instructions.txt": (
+        "Based on these complete lecture notes, extract the core principles "
+        "of this lecture. For each principle, provide:\n"
+        "1. The principle/concept name\n"
+        "2. A concise but rigorous definition\n"
+        "3. The key equation(s) associated with it (in LaTeX)\n"
+        "4. Why it matters -- its significance and where it applies\n"
+        "5. Common pitfalls or misconceptions\n\n"
+        "Format as a structured markdown document that a student can use as "
+        "a quick-reference cheat sheet."
+    ),
 }
 
 
@@ -39,9 +64,10 @@ def ensure_base_dirs() -> None:
     COURSES_DIR.mkdir(exist_ok=True)
     PROMPTS_DIR.mkdir(exist_ok=True)
 
-    if not any(PROMPTS_DIR.glob("*.txt")):
-        for filename, content in DEFAULT_PROMPTS.items():
-            (PROMPTS_DIR / filename).write_text(content, encoding="utf-8")
+    for filename, content in DEFAULT_PROMPTS.items():
+        path = PROMPTS_DIR / filename
+        if not path.exists():
+            path.write_text(content, encoding="utf-8")
 
 
 def list_courses() -> list[str]:

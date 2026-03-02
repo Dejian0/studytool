@@ -123,6 +123,13 @@ def _extract_last_context(content: str) -> str:
 # Prompt building
 # ---------------------------------------------------------------------------
 
+def _load_prompt_file(name: str, fallback: str = "") -> str:
+    try:
+        return filesystem.read_prompt(name)
+    except FileNotFoundError:
+        return fallback
+
+
 def _build_slide_prompt(
     slide_num: int,
     total_slides: int,
@@ -141,32 +148,30 @@ def _build_slide_prompt(
         f"Extracted text from this slide:\n\n{extracted_text}"
     )
 
-    parts.append(
-        "Explain this slide in depth as if you are a professor delivering a "
-        "live lecture. Reference the content of the slide directly. Build on "
-        "what was covered in previous slides where relevant.\n\n"
-        "After your explanation, add an HTML comment on its own line with a "
-        "2-3 sentence summary of the key points from THIS slide only, using "
-        "this exact format:\n"
-        "<!-- CONTEXT: Your 2-3 sentence summary here -->"
+    instructions = _load_prompt_file(
+        "slide_explanation_instructions.txt",
+        "Explain this slide in depth. After your explanation, add "
+        "<!-- CONTEXT: Your 2-3 sentence summary here -->",
     )
+    parts.append(instructions)
 
     return "\n\n".join(parts)
 
 
 def _build_principles_prompt(lecture_notes: str) -> str:
-    return (
-        "Based on these complete lecture notes, extract the core principles "
-        "of this lecture. For each principle, provide:\n"
+    instructions = _load_prompt_file(
+        "core_principles_instructions.txt",
+        "Based on these complete lecture notes, extract the core principles of "
+        "this lecture. For each principle, provide:\n"
         "1. The principle/concept name\n"
         "2. A concise but rigorous definition\n"
         "3. The key equation(s) associated with it (in LaTeX)\n"
         "4. Why it matters -- its significance and where it applies\n"
         "5. Common pitfalls or misconceptions\n\n"
-        "Format as a structured markdown document that a student can use as "
-        "a quick-reference cheat sheet.\n\n"
-        "---\n\n" + lecture_notes
+        "Format as a structured markdown document that a student can use as a "
+        "quick-reference cheat sheet.",
     )
+    return instructions + "\n\n---\n\n" + lecture_notes
 
 
 # ---------------------------------------------------------------------------
@@ -340,10 +345,11 @@ def _run_core_principles(
             })
             return
 
-        system_prompt = (
+        system_prompt = _load_prompt_file(
+            "core_principles_system.txt",
             "You are an expert engineering professor creating a concise reference "
             "sheet for students. Use $...$ for inline math and $$...$$ for display "
-            "equations. Output well-structured Markdown."
+            "equations. Output well-structured Markdown.",
         )
         user_text = _build_principles_prompt(lecture_notes)
         messages = ai.build_messages(system_prompt, [], user_text, [])

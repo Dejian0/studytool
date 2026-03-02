@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Sidebar from './components/Sidebar/Sidebar';
 import SlideViewer from './components/SlideViewer/SlideViewer';
+import SlideNotesPane from './components/SlideNotesPane/SlideNotesPane';
 import NotesPanel from './components/NotesPanel/NotesPanel';
 import ChatPanel from './components/ChatPanel/ChatPanel';
 import { fetchGenerateNotesStatus } from './api/notes';
@@ -154,46 +155,84 @@ export default function App() {
               </button>
             </div>
 
-            {/* Tab content + optional chat panel */}
+            {/* Tab content */}
             <div className="flex flex-1 overflow-hidden">
-              <div className="flex flex-1 overflow-hidden">
-                {activeTab === 'slides' && (
-                  <SlideViewer
-                    course={selectedCourse}
-                    filename={selectedFile}
-                    page={slidePage}
-                    onPageChange={setSlidePage}
-                    onSwitchToNotes={() => setActiveTab('notes')}
-                    onAskAI={handleAskAI}
-                  />
-                )}
-                {activeTab === 'notes' && (
+              {activeTab === 'slides' && (
+                <>
+                  {/* Left: slide viewer */}
+                  <div className="flex min-w-0 flex-[55] overflow-hidden">
+                    <SlideViewer
+                      course={selectedCourse}
+                      filename={selectedFile}
+                      page={slidePage}
+                      onPageChange={setSlidePage}
+                      onSwitchToNotes={() => setActiveTab('notes')}
+                      onAskAI={handleAskAI}
+                    />
+                  </div>
+                  {/* Right: per-slide notes + chat overlay */}
+                  <div className="relative flex min-w-0 flex-[45] overflow-hidden">
+                    <SlideNotesPane
+                      course={selectedCourse}
+                      filename={selectedFile}
+                      page={slidePage}
+                    />
+                    {chatOpen && chatContext && (
+                      <ChatPanel
+                        course={selectedCourse}
+                        filename={selectedFile}
+                        page={slidePage}
+                        context={chatContext}
+                        messages={chatMessages}
+                        onMessagesChange={setChatMessages}
+                        onContextChange={setChatContext}
+                        onClose={() => setChatOpen(false)}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+              {activeTab === 'notes' && (
+                <div className="relative flex flex-1 overflow-hidden">
                   <NotesPanel
                     course={selectedCourse}
                     filename={selectedFile}
                     type="notes"
                   />
-                )}
-                {activeTab === 'principles' && (
+                  {chatOpen && chatContext && (
+                    <ChatPanel
+                      course={selectedCourse}
+                      filename={selectedFile}
+                      page={slidePage}
+                      context={chatContext}
+                      messages={chatMessages}
+                      onMessagesChange={setChatMessages}
+                      onContextChange={setChatContext}
+                      onClose={() => setChatOpen(false)}
+                    />
+                  )}
+                </div>
+              )}
+              {activeTab === 'principles' && (
+                <div className="relative flex flex-1 overflow-hidden">
                   <NotesPanel
                     course={selectedCourse}
                     filename={selectedFile}
                     type="principles"
                   />
-                )}
-              </div>
-
-              {chatOpen && chatContext && (
-                <ChatPanel
-                  course={selectedCourse}
-                  filename={selectedFile}
-                  page={slidePage}
-                  context={chatContext}
-                  messages={chatMessages}
-                  onMessagesChange={setChatMessages}
-                  onContextChange={setChatContext}
-                  onClose={() => setChatOpen(false)}
-                />
+                  {chatOpen && chatContext && (
+                    <ChatPanel
+                      course={selectedCourse}
+                      filename={selectedFile}
+                      page={slidePage}
+                      context={chatContext}
+                      messages={chatMessages}
+                      onMessagesChange={setChatMessages}
+                      onContextChange={setChatContext}
+                      onClose={() => setChatOpen(false)}
+                    />
+                  )}
+                </div>
               )}
             </div>
           </>

@@ -1,0 +1,8 @@
+Based on these complete lecture notes, extract the core principles of this lecture. For each principle, provide:
+1. The principle/concept name
+2. A concise but rigorous definition
+3. The key equation(s) associated with it (in LaTeX)
+4. Why it matters -- its significance and where it applies
+5. Common pitfalls or misconceptions
+
+Format as a structured markdown document that a student can use as a quick-reference cheat sheet.

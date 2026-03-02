@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProviders, sendChatMessage } from '../../api/chat';
+import { fetchPrompts } from '../../api/prompts';
 import type { ChatContext, ChatMessage as ChatMessageType } from '../../types';
 import ChatMessage from './ChatMessage';
 import ContextIndicator from './ContextIndicator';
@@ -43,6 +44,18 @@ export default function ChatPanel({
   });
 
   const allModels = providers ? Object.values(providers).flat() : ['gpt-4o'];
+
+  const CHAT_PROMPTS = ['default_explainer.txt', 'socratic_tutor.txt', 'exam_analyzer.txt'];
+
+  const { data: allPrompts = [] } = useQuery({
+    queryKey: ['prompts'],
+    queryFn: fetchPrompts,
+    staleTime: 60_000,
+  });
+
+  const chatPrompts = allPrompts.length > 0
+    ? allPrompts.filter((p) => CHAT_PROMPTS.includes(p))
+    : CHAT_PROMPTS;
 
   useEffect(() => {
     const el = messagesRef.current;
@@ -120,7 +133,7 @@ export default function ChatPanel({
   }
 
   return (
-    <div className="flex h-full w-80 flex-col border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:w-96">
+    <div className="absolute inset-0 z-20 flex flex-col bg-white/95 backdrop-blur-sm dark:bg-zinc-950/95">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
         <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">AI Chat</h3>
@@ -153,8 +166,11 @@ export default function ChatPanel({
           onChange={(e) => setSystemPrompt(e.target.value)}
           className="w-full rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
         >
-          <option value="default_explainer.txt">Default Explainer</option>
-          <option value="socratic_tutor.txt">Socratic Tutor</option>
+          {chatPrompts.map((p) => (
+            <option key={p} value={p}>
+              {p.replace(/_/g, ' ').replace(/\.txt$/, '').replace(/\b\w/g, (c) => c.toUpperCase())}
+            </option>
+          ))}
         </select>
       </div>
 

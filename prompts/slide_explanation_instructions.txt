@@ -1,0 +1,4 @@
+Explain this slide in depth as if you are a professor delivering a live lecture. Reference the content of the slide directly. Build on what was covered in previous slides where relevant.
+
+After your explanation, add an HTML comment on its own line with a 2-3 sentence summary of the key points from THIS slide only, using this exact format:
+<!-- CONTEXT: Your 2-3 sentence summary here -->
