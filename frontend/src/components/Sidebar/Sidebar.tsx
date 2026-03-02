@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import CourseSelector from './CourseSelector';
-import FileList from './FileList';
+import CourseTree from './CourseTree';
 import UploadZone from './UploadZone';
 import ThemeToggle from '../ThemeToggle';
 import SettingsModal from '../SettingsModal/SettingsModal';
@@ -60,19 +59,15 @@ export default function Sidebar({
 
       {/* Scrollable content */}
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-4">
-        <CourseSelector selected={selectedCourse} onSelect={onSelectCourse} />
+        <CourseTree
+          selectedCourse={selectedCourse}
+          onSelectCourse={onSelectCourse}
+          selectedFile={selectedFile}
+          onSelectFile={onSelectFile}
+          onDeleteFile={onDeleteFile}
+        />
 
-        {selectedCourse && (
-          <>
-            <FileList
-              course={selectedCourse}
-              selected={selectedFile}
-              onSelect={onSelectFile}
-              onDelete={onDeleteFile}
-            />
-            <UploadZone course={selectedCourse} />
-          </>
-        )}
+        {selectedCourse && <UploadZone course={selectedCourse} />}
       </div>
     </aside>
   );
