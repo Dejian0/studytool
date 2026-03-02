@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import json
+import logging
 from pathlib import Path
 
 import os
 
 from fastapi import FastAPI, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 try:
     from dotenv import load_dotenv
@@ -31,11 +35,14 @@ from lib.filesystem import (
 )
 from lib.pdf_viewer import extract_page_text, get_page_count, render_page
 from lib.notes_pipeline import (
+    extract_slide_section,
     get_job_status,
     is_job_running,
+    notes_filename,
     start_core_principles,
     start_lecture_notes,
 )
+from lib import ai
 
 ensure_base_dirs()
 
@@ -62,6 +69,23 @@ class UpdatePromptRequest(BaseModel):
 
 class GenerateRequest(BaseModel):
     model: str = "gpt-5.2"
+
+
+class ChatContext(BaseModel):
+    course: str
+    pdf: str
+    page: int
+    selected_text: str | None = None
+    cropped_image_base64: str | None = None
+    include_slide_notes: bool = True
+
+
+class ChatRequest(BaseModel):
+    model: str = "gpt-4o"
+    system_prompt: str = "default_explainer.txt"
+    message: str
+    context: ChatContext
+    history: list[dict] = []
 
 
 # ---------------------------------------------------------------------------
@@ -215,17 +239,102 @@ def get_note(course: str, filename: str):
 
 
 # ---------------------------------------------------------------------------
-# AI / Chat stubs (Phase 7)
+# AI / Chat (Phase 7)
 # ---------------------------------------------------------------------------
 
-@app.post("/api/chat")
-def post_chat():
-    raise HTTPException(status_code=501, detail="Chat endpoint not yet implemented (Phase 7)")
+AVAILABLE_MODELS = {
+    "openai": ["gpt-4o", "gpt-4o-mini", "gpt-5.2", "gpt-5-mini"],
+}
 
 
 @app.get("/api/providers")
 def get_providers():
-    raise HTTPException(status_code=501, detail="Providers endpoint not yet implemented (Phase 7)")
+    return AVAILABLE_MODELS
+
+
+@app.post("/api/chat")
+def post_chat(
+    body: ChatRequest,
+    x_openai_key: str | None = Header(default=None),
+):
+    api_key = _resolve_api_key(x_openai_key)
+
+    try:
+        system_text = read_prompt(body.system_prompt)
+    except FileNotFoundError:
+        raise HTTPException(status_code=400, detail=f"Prompt '{body.system_prompt}' not found")
+
+    ctx = body.context
+    context_parts: list[str] = []
+
+    if ctx.include_slide_notes:
+        try:
+            full_notes = read_note(ctx.course, notes_filename(ctx.pdf))
+            slide_notes = extract_slide_section(full_notes, ctx.page)
+            if slide_notes:
+                context_parts.append(
+                    "## Lecture notes for this slide\n" + slide_notes
+                )
+        except FileNotFoundError:
+            pass
+
+    if ctx.selected_text:
+        context_parts.append(
+            "## Text the student selected on the slide\n"
+            f'"{ctx.selected_text}"'
+        )
+    elif not ctx.cropped_image_base64:
+        pdf_path = get_file_path(ctx.course, "slides", ctx.pdf)
+        if pdf_path.is_file():
+            try:
+                text_data = extract_page_text(pdf_path, ctx.page)
+                page_text = " ".join(b["text"] for b in text_data["blocks"]).strip()
+                if page_text:
+                    context_parts.append(
+                        "## Full text from the current slide\n" + page_text
+                    )
+            except Exception:
+                logger.warning("Failed to extract page text for chat context", exc_info=True)
+
+    user_text = ""
+    if context_parts:
+        user_text = "\n\n".join(context_parts) + "\n\n"
+    user_text += body.message
+
+    image_blocks: list[dict] = []
+    if ctx.cropped_image_base64:
+        import base64 as b64mod
+        try:
+            b64mod.b64decode(ctx.cropped_image_base64, validate=True)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid base64 image data")
+        image_blocks.append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/png;base64,{ctx.cropped_image_base64}",
+                "detail": "high",
+            },
+        })
+
+    messages = ai.build_messages(system_text, body.history, user_text, image_blocks)
+
+    def generate():
+        try:
+            for chunk in ai.stream_chat(api_key, body.model, messages):
+                yield f"data: {json.dumps({'content': chunk})}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as exc:
+            logger.exception("Chat streaming error")
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

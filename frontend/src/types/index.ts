@@ -34,3 +34,19 @@ export interface NoteContent {
   filename: string;
   content: string;
 }
+
+export interface ChatContext {
+  course: string;
+  pdf: string;
+  page: number;
+  selected_text?: string | null;
+  cropped_image_base64?: string | null;
+  include_slide_notes: boolean;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export type Providers = Record<string, string[]>;

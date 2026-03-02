@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import Sidebar from './components/Sidebar/Sidebar';
 import SlideViewer from './components/SlideViewer/SlideViewer';
 import NotesPanel from './components/NotesPanel/NotesPanel';
+import ChatPanel from './components/ChatPanel/ChatPanel';
 import { fetchGenerateNotesStatus } from './api/notes';
-import type { GenerateStatus } from './types';
+import type { GenerateStatus, ChatMessage, ChatContext } from './types';
 
 type Tab = 'slides' | 'notes' | 'principles';
 
@@ -14,6 +15,10 @@ export default function App() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('slides');
   const [slidePages, setSlidePages] = useState<Record<string, number>>({});
+
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatContext, setChatContext] = useState<ChatContext | null>(null);
 
   function handleSelectCourse(course: string) {
     setSelectedCourse(course);
@@ -37,6 +42,12 @@ export default function App() {
     setActiveTab('slides');
   }, [selectedCourse, selectedFile]);
 
+  // Reset chat when switching courses or PDFs
+  useEffect(() => {
+    setChatMessages([]);
+    setChatContext(null);
+  }, [selectedCourse, selectedFile]);
+
   const hasFile = selectedCourse && selectedFile;
 
   const { data: notesStatus } = useQuery<GenerateStatus>({
@@ -47,6 +58,34 @@ export default function App() {
       return query.state.data?.status === 'running' ? 2000 : 10000;
     },
   });
+
+  function buildDefaultContext(): ChatContext {
+    return {
+      course: selectedCourse!,
+      pdf: selectedFile!,
+      page: slidePage,
+      selected_text: null,
+      cropped_image_base64: null,
+      include_slide_notes: true,
+    };
+  }
+
+  const handleAskAI = useCallback(
+    (partialContext?: { selected_text?: string; cropped_image_base64?: string }) => {
+      if (!selectedCourse || !selectedFile) return;
+      const ctx: ChatContext = {
+        course: selectedCourse,
+        pdf: selectedFile,
+        page: slidePage,
+        selected_text: partialContext?.selected_text ?? null,
+        cropped_image_base64: partialContext?.cropped_image_base64 ?? null,
+        include_slide_notes: true,
+      };
+      setChatContext(ctx);
+      setChatOpen(true);
+    },
+    [selectedCourse, selectedFile, slidePage],
+  );
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -75,51 +114,85 @@ export default function App() {
         {hasFile ? (
           <>
             {/* Tab bar */}
-            <div className="flex shrink-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-              <TabButton
-                active={activeTab === 'slides'}
-                onClick={() => setActiveTab('slides')}
+            <div className="flex shrink-0 items-center border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="flex flex-1">
+                <TabButton
+                  active={activeTab === 'slides'}
+                  onClick={() => setActiveTab('slides')}
+                >
+                  Slides
+                </TabButton>
+                <TabButton
+                  active={activeTab === 'notes'}
+                  onClick={() => setActiveTab('notes')}
+                  badge={notesStatus?.status}
+                >
+                  Lecture Notes
+                </TabButton>
+                <TabButton
+                  active={activeTab === 'principles'}
+                  onClick={() => setActiveTab('principles')}
+                >
+                  Core Principles
+                </TabButton>
+              </div>
+              <button
+                onClick={() => {
+                  if (!chatOpen && !chatContext) setChatContext(buildDefaultContext());
+                  setChatOpen((o) => !o);
+                }}
+                className={`mr-2 rounded-md p-1.5 transition-colors ${
+                  chatOpen
+                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400'
+                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
+                }`}
+                title={chatOpen ? 'Close AI chat' : 'Open AI chat'}
               >
-                Slides
-              </TabButton>
-              <TabButton
-                active={activeTab === 'notes'}
-                onClick={() => setActiveTab('notes')}
-                badge={notesStatus?.status}
-              >
-                Lecture Notes
-              </TabButton>
-              <TabButton
-                active={activeTab === 'principles'}
-                onClick={() => setActiveTab('principles')}
-              >
-                Core Principles
-              </TabButton>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 3.925 1 5.261v5.478c0 1.336.993 2.506 2.43 2.737.236.038.474.065.713.082l-.49 2.452a.75.75 0 0 0 1.084.785l4.158-2.08A17.483 17.483 0 0 0 10 14.76c2.236 0 4.43-.18 6.57-.524C18.007 13.996 19 12.826 19 11.49V5.26c0-1.336-.993-2.506-2.43-2.737A49.1 49.1 0 0 0 10 2ZM6.75 6a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5ZM6 9.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5A.75.75 0 0 1 6 9.25Z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
 
-            {/* Tab content */}
+            {/* Tab content + optional chat panel */}
             <div className="flex flex-1 overflow-hidden">
-              {activeTab === 'slides' && (
-                <SlideViewer
+              <div className="flex flex-1 overflow-hidden">
+                {activeTab === 'slides' && (
+                  <SlideViewer
+                    course={selectedCourse}
+                    filename={selectedFile}
+                    page={slidePage}
+                    onPageChange={setSlidePage}
+                    onSwitchToNotes={() => setActiveTab('notes')}
+                    onAskAI={handleAskAI}
+                  />
+                )}
+                {activeTab === 'notes' && (
+                  <NotesPanel
+                    course={selectedCourse}
+                    filename={selectedFile}
+                    type="notes"
+                  />
+                )}
+                {activeTab === 'principles' && (
+                  <NotesPanel
+                    course={selectedCourse}
+                    filename={selectedFile}
+                    type="principles"
+                  />
+                )}
+              </div>
+
+              {chatOpen && chatContext && (
+                <ChatPanel
                   course={selectedCourse}
                   filename={selectedFile}
                   page={slidePage}
-                  onPageChange={setSlidePage}
-                  onSwitchToNotes={() => setActiveTab('notes')}
-                />
-              )}
-              {activeTab === 'notes' && (
-                <NotesPanel
-                  course={selectedCourse}
-                  filename={selectedFile}
-                  type="notes"
-                />
-              )}
-              {activeTab === 'principles' && (
-                <NotesPanel
-                  course={selectedCourse}
-                  filename={selectedFile}
-                  type="principles"
+                  context={chatContext}
+                  messages={chatMessages}
+                  onMessagesChange={setChatMessages}
+                  onContextChange={setChatContext}
+                  onClose={() => setChatOpen(false)}
                 />
               )}
             </div>

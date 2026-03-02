@@ -28,7 +28,7 @@ function principlesFilename(pdfName: string): string {
 
 export default function NotesPanel({ course, filename, type }: Props) {
   const queryClient = useQueryClient();
-  const [model, setModel] = useState('gpt-4o');
+  const [model, setModel] = useState('gpt-5.2');
 
   const noteFile = type === 'notes' ? notesFilename(filename) : principlesFilename(filename);
   const statusFn = type === 'notes' ? fetchGenerateNotesStatus : fetchGeneratePrinciplesStatus;

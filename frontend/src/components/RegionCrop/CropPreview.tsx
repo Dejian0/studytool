@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 interface Props {
   imageBlob: Blob;
   onCancel: () => void;
+  onAskAI?: () => void;
 }
 
-export default function CropPreview({ imageBlob, onCancel }: Props) {
+export default function CropPreview({ imageBlob, onCancel, onAskAI }: Props) {
   const [imageUrl, setImageUrl] = useState('');
 
   useEffect(() => {
@@ -29,9 +30,13 @@ export default function CropPreview({ imageBlob, onCancel }: Props) {
 
       <div className="flex shrink-0 items-center gap-1.5">
         <button
-          disabled
-          className="cursor-not-allowed rounded-md bg-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-400 dark:bg-zinc-700 dark:text-zinc-500"
-          title="Coming in Phase 7"
+          onClick={onAskAI}
+          disabled={!onAskAI}
+          className={
+            onAskAI
+              ? 'rounded-md bg-purple-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-purple-700'
+              : 'cursor-not-allowed rounded-md bg-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-400 dark:bg-zinc-700 dark:text-zinc-500'
+          }
         >
           Ask AI about this
         </button>

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -7,7 +8,21 @@ interface Props {
   className?: string;
 }
 
+/**
+ * Normalize LaTeX delimiters that remark-math doesn't handle.
+ * LLMs frequently emit \(...\) and \[...\] even when prompted for $...$ / $$...$$.
+ */
+function normalizeLatexDelimiters(text: string): string {
+  // \[...\] → $$...$$  (display math)
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+  // \(...\) → $...$    (inline math)
+  text = text.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+  return text;
+}
+
 export default function MarkdownRenderer({ content, className = '' }: Props) {
+  const normalized = useMemo(() => normalizeLatexDelimiters(content), [content]);
+
   return (
     <div
       className={`
@@ -25,7 +40,7 @@ export default function MarkdownRenderer({ content, className = '' }: Props) {
       `}
     >
       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-        {content}
+        {normalized}
       </ReactMarkdown>
     </div>
   );

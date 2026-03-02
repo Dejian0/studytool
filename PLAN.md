@@ -276,7 +276,7 @@ Each provider (OpenAI, Gemini, Ollama) implements this interface. The `/api/chat
 
 ---
 
-## Phase 6: Batch Lecture Notes Pipeline
+## Phase 6: Batch Lecture Notes Pipeline ✅ Done
 
 **Goal**: Generate deep, professor-quality explanations for every slide in a lecture, one slide at a time. This is a one-time process per lecture PDF. The output is a saved markdown file.
 

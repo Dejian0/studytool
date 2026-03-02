@@ -13,9 +13,10 @@ interface Props {
   page: number;
   onPageChange: (page: number) => void;
   onSwitchToNotes?: () => void;
+  onAskAI?: (context?: { selected_text?: string; cropped_image_base64?: string }) => void;
 }
 
-export default function SlideViewer({ course, filename, page, onPageChange, onSwitchToNotes }: Props) {
+export default function SlideViewer({ course, filename, page, onPageChange, onSwitchToNotes, onAskAI }: Props) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [pageInput, setPageInput] = useState(String(page));
   const [selectedBlockIds, setSelectedBlockIds] = useState<Set<number>>(new Set());
@@ -250,12 +251,21 @@ export default function SlideViewer({ course, filename, page, onPageChange, onSw
                 selectedText={selectedText}
                 onCopy={handleCopy}
                 onClear={clearSelection}
+                onAskAI={onAskAI ? () => onAskAI({ selected_text: selectedText }) : undefined}
               />
             )}
             {croppedImage && (
               <CropPreview
                 imageBlob={croppedImage}
                 onCancel={() => setCroppedImage(null)}
+                onAskAI={onAskAI ? async () => {
+                  const buf = await croppedImage.arrayBuffer();
+                  const bytes = new Uint8Array(buf);
+                  let binary = '';
+                  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+                  const b64 = btoa(binary);
+                  onAskAI({ cropped_image_base64: b64 });
+                } : undefined}
               />
             )}
           </>

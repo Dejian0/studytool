@@ -4,9 +4,10 @@ interface Props {
   selectedText: string;
   onCopy: () => void;
   onClear: () => void;
+  onAskAI?: () => void;
 }
 
-export default function SelectionToolbar({ selectedText, onCopy, onClear }: Props) {
+export default function SelectionToolbar({ selectedText, onCopy, onClear, onAskAI }: Props) {
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
@@ -36,9 +37,13 @@ export default function SelectionToolbar({ selectedText, onCopy, onClear }: Prop
         </button>
 
         <button
-          disabled
-          className="cursor-not-allowed rounded-md bg-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-400 dark:bg-zinc-700 dark:text-zinc-500"
-          title="Coming in Phase 7"
+          onClick={onAskAI}
+          disabled={!onAskAI}
+          className={
+            onAskAI
+              ? 'rounded-md bg-purple-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-purple-700'
+              : 'cursor-not-allowed rounded-md bg-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-400 dark:bg-zinc-700 dark:text-zinc-500'
+          }
         >
           Ask AI
         </button>

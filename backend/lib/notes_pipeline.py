@@ -24,8 +24,31 @@ def _job_key(job_type: str, course: str, filename: str) -> tuple[str, str, str]:
     return (job_type, course, filename)
 
 
-def _notes_filename(pdf_name: str) -> str:
+def notes_filename(pdf_name: str) -> str:
+    """Return the lecture notes filename for a given PDF."""
     return Path(pdf_name).stem + NOTES_SUFFIX
+
+
+def extract_slide_section(notes_content: str, slide_num: int) -> str:
+    """Extract the notes section for a single slide from the full lecture notes.
+
+    Returns the text between ``## Slide N`` and the next ``## Slide`` header
+    (or end of file), stripped of the CONTEXT HTML comment.
+    """
+    pattern = re.compile(
+        rf"^## Slide {slide_num}\b.*?(?=^## Slide \d+|\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(notes_content)
+    if not match:
+        return ""
+    section = match.group(0).strip()
+    section = CONTEXT_RE.sub("", section).strip()
+    return section
+
+
+def _notes_filename(pdf_name: str) -> str:
+    return notes_filename(pdf_name)
 
 
 def _principles_filename(pdf_name: str) -> str:
