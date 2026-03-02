@@ -28,7 +28,7 @@ function principlesFilename(pdfName: string): string {
 
 export default function NotesPanel({ course, filename, type }: Props) {
   const queryClient = useQueryClient();
-  const [model, setModel] = useState('gpt-5.2');
+  const [model, setModel] = useState('gpt-5-mini');
 
   const noteFile = type === 'notes' ? notesFilename(filename) : principlesFilename(filename);
   const statusFn = type === 'notes' ? fetchGenerateNotesStatus : fetchGeneratePrinciplesStatus;
@@ -91,7 +91,17 @@ export default function NotesPanel({ course, filename, type }: Props) {
       {isCompleted && (
         <>
           {type === 'notes' && (
-            <div className="flex shrink-0 items-center justify-end border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
+            <div className="flex shrink-0 items-center justify-end gap-2 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
+              <label className="text-xs text-zinc-500 dark:text-zinc-400">Model:</label>
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="rounded border border-zinc-300 bg-white px-1.5 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+              >
+                <option value="gpt-5.2">gpt-5.2</option>
+                <option value="gpt-5-mini">gpt-5-mini</option>
+                <option value="gpt-5-nano">gpt-5-nano</option>
+              </select>
               <button
                 onClick={() => {
                   if (!confirm('Regenerate lecture notes from scratch? This will replace the existing notes.')) return;

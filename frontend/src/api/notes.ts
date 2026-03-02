@@ -4,7 +4,7 @@ import type { GenerateStatus, NoteContent } from '../types';
 export function startGenerateNotes(
   course: string,
   filename: string,
-  model = 'gpt-4o',
+  model = 'gpt-5-mini',
   force = false,
 ): Promise<{ status: string }> {
   return apiFetch(
@@ -38,7 +38,7 @@ export function fetchGeneratePrinciplesStatus(
 export function startGeneratePrinciples(
   course: string,
   filename: string,
-  model = 'gpt-4o',
+  model = 'gpt-5-mini',
 ): Promise<{ status: string }> {
   return apiFetch(
     `/generate-principles/${encodeURIComponent(course)}/${encodeURIComponent(filename)}`,

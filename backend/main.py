@@ -72,7 +72,7 @@ class UpdatePromptRequest(BaseModel):
     content: str
 
 class GenerateRequest(BaseModel):
-    model: str = "gpt-5.2"
+    model: str = "gpt-5-mini"
     force: bool = False
 
 
@@ -86,7 +86,7 @@ class ChatContext(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    model: str = "gpt-4o"
+    model: str = "gpt-5-mini"
     system_prompt: str = "default_explainer.txt"
     message: str
     context: ChatContext
@@ -265,7 +265,7 @@ def get_note(course: str, filename: str):
 # ---------------------------------------------------------------------------
 
 AVAILABLE_MODELS = {
-    "openai": ["gpt-4o", "gpt-4o-mini", "gpt-5.2", "gpt-5-mini"],
+    "openai": ["gpt-5.2", "gpt-5-mini", "gpt-5-nano"],
 }
 
 
@@ -380,7 +380,7 @@ def post_generate_notes(
         clear_job_status("notes", course, filename)
 
     api_key = _resolve_api_key(x_openai_key)
-    model = body.model if body else "gpt-4o"
+    model = body.model if body else "gpt-5-mini"
     start_lecture_notes(course, filename, api_key, model)
     return {"status": "started"}
 
@@ -409,6 +409,6 @@ def post_generate_principles(
         raise HTTPException(status_code=409, detail="Generation already in progress")
 
     api_key = _resolve_api_key(x_openai_key)
-    model = body.model if body else "gpt-4o"
+    model = body.model if body else "gpt-5-mini"
     start_core_principles(course, filename, api_key, model)
     return {"status": "started"}

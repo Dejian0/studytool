@@ -33,7 +33,6 @@ MODELS = {
     "GPT-5.2": "gpt-5.2",
     "GPT-5 mini": "gpt-5-mini",
     "GPT-5 nano": "gpt-5-nano",
-    "GPT-4o": "gpt-4o",
 }
 
 # ---------------------------------------------------------------------------
@@ -61,7 +60,7 @@ with st.sidebar:
         placeholder="sk-…",
     )
 
-    model_label = st.selectbox("Model", list(MODELS.keys()), index=3)
+    model_label = st.selectbox("Model", list(MODELS.keys()), index=1)
     selected_model = MODELS[model_label]
 
     st.divider()

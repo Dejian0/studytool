@@ -31,7 +31,7 @@ export default function ChatPanel({
   const [streaming, setStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [model, setModel] = useState('gpt-4o');
+  const [model, setModel] = useState('gpt-5-mini');
   const [systemPrompt, setSystemPrompt] = useState('default_explainer.txt');
   const abortRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -43,7 +43,7 @@ export default function ChatPanel({
     staleTime: 60_000,
   });
 
-  const allModels = providers ? Object.values(providers).flat() : ['gpt-4o'];
+  const allModels = providers ? Object.values(providers).flat() : ['gpt-5.2', 'gpt-5-mini', 'gpt-5-nano'];
 
   const CHAT_PROMPTS = ['default_explainer.txt', 'socratic_tutor.txt', 'exam_analyzer.txt'];
 

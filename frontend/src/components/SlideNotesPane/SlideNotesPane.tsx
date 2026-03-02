@@ -21,7 +21,7 @@ function notesFilename(pdfName: string): string {
 
 export default function SlideNotesPane({ course, filename, page }: Props) {
   const queryClient = useQueryClient();
-  const [model, setModel] = useState('gpt-5.2');
+  const [model, setModel] = useState('gpt-5-mini');
   const noteFile = notesFilename(filename);
 
   const { data: status } = useQuery<GenerateStatus>({

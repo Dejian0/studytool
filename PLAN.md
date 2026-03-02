@@ -120,7 +120,7 @@ This comes from PyMuPDF's `page.get_text("dict")`. The `bbox` is `[x0, y0, x1, y
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/api/chat` | Send a chat message. Body includes the message, optional image (base64 crop), context metadata (course, PDF, page, selected text). Streams the response back via SSE (Server-Sent Events). |
-| `GET` | `/api/providers` | List available LLM providers and their models (e.g., `{ "gemini": ["gemini-2.0-flash"], "openai": ["gpt-4o"] }`). |
+| `GET` | `/api/providers` | List available LLM providers and their models (e.g., `{ "openai": ["gpt-5.2", "gpt-5-mini", "gpt-5-nano"] }`). |
 | `POST` | `/api/generate-notes/{course}/{filename}` | Kick off the batch lecture notes pipeline (background task). |
 | `GET` | `/api/generate-notes/{course}/{filename}/status` | Poll progress: `{ "status": "running", "current_slide": 12, "total_slides": 45 }`. |
 | `POST` | `/api/generate-principles/{course}/{filename}` | Generate core principles summary for a lecture (background task). |
