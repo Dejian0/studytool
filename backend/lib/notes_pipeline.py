@@ -274,15 +274,22 @@ def _run_lecture_notes(
             "error": None,
         })
 
-    except Exception:
+    except Exception as exc:
         logger.exception("Lecture notes generation failed for %s/%s", course, filename)
+        error_msg = str(exc)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+            error_msg = f"Rate limit exceeded for model '{model}'. Try a different model or wait before retrying."
+        elif "quota" in error_msg.lower():
+            error_msg = f"Quota exceeded for model '{model}'. Check your API plan."
+        else:
+            error_msg = f"Generation failed: {type(exc).__name__}: {str(exc)[:200]}"
         with _lock:
             current = _jobs.get(key, {}).get("current_slide", 0)
         _set_job(key, {
             "status": "failed",
             "current_slide": current,
             "total_slides": total_slides,
-            "error": "Generation failed. Check server logs for details.",
+            "error": error_msg,
         })
 
 
@@ -379,11 +386,18 @@ def _run_core_principles(
             "error": None,
         })
 
-    except Exception:
+    except Exception as exc:
         logger.exception("Core principles generation failed for %s/%s", course, filename)
+        error_msg = str(exc)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+            error_msg = f"Rate limit exceeded for model '{model}'. Try a different model or wait before retrying."
+        elif "quota" in error_msg.lower():
+            error_msg = f"Quota exceeded for model '{model}'. Check your API plan."
+        else:
+            error_msg = f"Generation failed: {type(exc).__name__}: {str(exc)[:200]}"
         _set_job(key, {
             "status": "failed",
             "current_slide": 0,
             "total_slides": 1,
-            "error": "Generation failed. Check server logs for details.",
+            "error": error_msg,
         })

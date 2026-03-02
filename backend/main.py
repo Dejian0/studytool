@@ -279,7 +279,7 @@ def get_note(course: str, filename: str):
 
 AVAILABLE_MODELS = {
     "openai": ["gpt-5.2", "gpt-5-mini", "gpt-5-nano"],
-    "google": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+    "google": ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"],
 }
 
 _GEMINI_MODELS = set(AVAILABLE_MODELS["google"])

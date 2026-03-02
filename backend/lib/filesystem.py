@@ -32,9 +32,9 @@ DEFAULT_PROMPTS: dict[str, str] = {
         "student is clearly stuck after several attempts."
     ),
     "slide_explanation_instructions.txt": (
-        "Explain this slide in depth as if you are a professor delivering a "
-        "live lecture. Reference the content of the slide directly. Build on "
-        "what was covered in previous slides where relevant.\n\n"
+        "Explain this slide in depth. Reference the content of the slide "
+        "directly. Build on what was covered in previous slides where "
+        "relevant.\n\n"
         "After your explanation, add an HTML comment on its own line with a "
         "2-3 sentence summary of the key points from THIS slide only, using "
         "this exact format:\n"

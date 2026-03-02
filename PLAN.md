@@ -232,9 +232,9 @@ The app has a single-page layout with three regions:
 
 ---
 
-## Phase 5: Multi-Provider LLM Backend ⏭️ Skipped
+## Phase 5: Multi-Provider LLM Backend ✅ Done
 
-> **Skipped**: This phase is a cost/flexibility optimization, not a functional requirement. Phases 6 and 7 use the existing OpenAI integration in `lib/ai.py` directly. Multi-provider support (Gemini free tier, Ollama) can be added later as a standalone enhancement without affecting any other phase.
+> **Done**: Provider abstraction implemented in `backend/lib/providers/` with OpenAI and Google Gemini support. Model selection in all frontend dropdowns is now dynamic and grouped by provider. API keys resolved per-provider from `.env` or request headers.
 
 **Goal**: Support multiple LLM providers so the user isn't locked into paying for OpenAI API calls. Gemini's free tier becomes the default for interactive Q&A.
 
@@ -346,7 +346,7 @@ This is a **text-only** call (no images needed, since the lecture notes already 
 
 ---
 
-## Phase 7: Interactive Q&A Chat Panel
+## Phase 7: Interactive Q&A Chat Panel ✅ Done
 
 **Goal**: A chat panel where the user asks questions. Context is assembled automatically from pre-generated notes, selected text, and optional image crops.
 
@@ -418,18 +418,18 @@ This means most Q&A is **text-only** (just the lecture notes + selected text + q
 | 1 | Phase 1 | FastAPI backend (core endpoints: courses, slides, text extraction) | -- |
 | 2 | Phase 2 | React frontend (core viewer: sidebar, slide display, navigation) | Phase 1 |
 | 3 | Phase 3 | Text extraction overlay (clickable text blocks on slides) | Phase 1, 2 |
-| ~~4~~ | ~~Phase 5~~ | ~~Multi-provider LLM backend (Gemini, OpenAI, Ollama abstraction)~~ | ~~Phase 1~~ |
-| 4 | Phase 6 | Batch lecture notes + core principles generation (uses OpenAI directly) | Phase 1 |
-| 5 | Phase 7 | Chat panel + interactive Q&A (uses OpenAI directly) | Phase 2, 3, 6 |
-| 6 | Phase 4 | Region crop tool (draw-to-select on slides) | Phase 2, 7 |
-| 7 | Phase 8 | Docker Compose setup | Phase 1, 2 |
+| 4 | Phase 5 | Multi-provider LLM backend (Gemini + OpenAI abstraction) | Phase 1 |
+| 5 | Phase 6 | Batch lecture notes + core principles generation | Phase 1, 5 |
+| 6 | Phase 7 | Chat panel + interactive Q&A | Phase 2, 3, 5, 6 |
+| 7 | Phase 4 | Region crop tool (draw-to-select on slides) | Phase 2, 7 |
+| 8 | Phase 8 | Docker Compose setup | Phase 1, 2 |
 
 ### Why this order
 - The backend and frontend core come first because everything depends on them.
 - Text overlay comes early because it's the foundation for the "click to ask" interaction.
-- ~~Multi-provider LLM is needed before any AI features go live.~~ Phase 5 (multi-provider) is skipped -- all AI features use the existing OpenAI integration in `lib/ai.py` directly.
+- Multi-provider LLM (Phase 5) is now done -- all AI features can use OpenAI or Gemini.
 - Batch lecture notes come next since they produce the context that makes the chat panel most useful.
-- Chat panel follows, using pre-generated notes and OpenAI for interactive Q&A.
+- Chat panel follows, using pre-generated notes and the chosen provider for interactive Q&A.
 - Region crop is a polish feature that adds diagram/graph interaction last.
 - Docker comes last because it's packaging, not functionality. Adding it too early just slows down the dev loop.
 

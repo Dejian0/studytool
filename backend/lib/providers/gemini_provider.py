@@ -11,7 +11,7 @@ from . import LLMProvider
 
 class GeminiProvider(LLMProvider):
 
-    MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
+    MODELS = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"]
 
     def stream_chat(
         self, api_key: str, model: str, messages: list[dict]
@@ -33,11 +33,30 @@ class GeminiProvider(LLMProvider):
         system_instruction, contents = _convert_messages(messages)
         config = types.GenerateContentConfig(system_instruction=system_instruction) if system_instruction else None
 
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=config,
-        )
+        # #region agent log
+        import json as _json, time as _time
+        try:
+            with open("/home/think/projects/studytool/.cursor/debug-ecebc5.log", "a") as _f:
+                _f.write(_json.dumps({"sessionId":"ecebc5","location":"gemini_provider.py:chat_sync","message":"chat_sync_called","data":{"model":model,"num_contents":len(contents),"has_system":system_instruction is not None},"timestamp":int(_time.time()*1000),"hypothesisId":"H1,H3"}) + "\n")
+        except Exception:
+            pass
+        # #endregion
+
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=config,
+            )
+        except Exception as exc:
+            # #region agent log
+            try:
+                with open("/home/think/projects/studytool/.cursor/debug-ecebc5.log", "a") as _f:
+                    _f.write(_json.dumps({"sessionId":"ecebc5","location":"gemini_provider.py:chat_sync_error","message":"chat_sync_failed","data":{"model":model,"error_type":type(exc).__name__,"error_str":str(exc)[:500]},"timestamp":int(_time.time()*1000),"hypothesisId":"H1,H3,H4"}) + "\n")
+            except Exception:
+                pass
+            # #endregion
+            raise
         return response.text or ""
 
     def supports_vision(self) -> bool:
