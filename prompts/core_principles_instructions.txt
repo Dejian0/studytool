@@ -1,8 +1,23 @@
-Based on these complete lecture notes, extract the core principles of this lecture. For each principle, provide:
+Based on these complete lecture notes, extract the core principles of this lecture.
+
+Principles fall into two categories. Identify which category each principle belongs to and format it accordingly:
+
+### Category A -- Theoretical / Mathematical Concepts
+For principles that can be expressed as definitions and equations, provide:
 1. The principle/concept name
 2. A concise but rigorous definition
 3. The key equation(s) associated with it (in LaTeX)
 4. Why it matters -- its significance and where it applies
 5. Common pitfalls or misconceptions
 
-Format as a structured markdown document that a student can use as a quick-reference cheat sheet.
+### Category B -- Visual, Graphical, or Procedural Skills
+Some concepts are inherently visual or hands-on (e.g., reading a specific type of graph or diagram, sketching a curve, interpreting a plot, performing a graphical construction). These cannot be fully captured by a formula alone. For these, provide:
+1. The skill name (e.g., "Reading a Bode magnitude plot")
+2. What it is and when you need it (one or two sentences)
+3. Step-by-step procedure -- a short, numbered list of concrete instructions a student can follow to perform or interpret this skill (e.g., "1. Identify the corner frequencies on the horizontal axis. 2. Note the slope between each pair of corners. 3. ...")
+4. Key things to look for -- what patterns, shapes, or features signal important behavior
+5. Common mistakes
+
+Do NOT force visual/graphical concepts into Category A. If a student would need to draw, read, or visually interpret something on an exam, it belongs in Category B.
+
+Format as a structured markdown document that a student can use as a quick-reference cheat sheet. Use section headings to group related principles.
