@@ -33,7 +33,7 @@ export default function ChatPanel({
   const [model, setModel] = useState('gpt-4o');
   const [systemPrompt, setSystemPrompt] = useState('default_explainer.txt');
   const abortRef = useRef<AbortController | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: providers } = useQuery({
@@ -45,7 +45,8 @@ export default function ChatPanel({
   const allModels = providers ? Object.values(providers).flat() : ['gpt-4o'];
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages, streamingContent]);
 
   useEffect(() => {
@@ -161,7 +162,7 @@ export default function ChatPanel({
       <ContextIndicator context={context} onUpdate={onContextChange} />
 
       {/* Messages */}
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
+      <div ref={messagesRef} className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
         {messages.length === 0 && !streaming && (
           <div className="flex flex-1 items-center justify-center">
             <p className="text-center text-sm text-zinc-400 dark:text-zinc-600">
@@ -177,7 +178,6 @@ export default function ChatPanel({
         {streaming && streamingContent && (
           <ChatMessage role="assistant" content={streamingContent} isStreaming />
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Error */}
