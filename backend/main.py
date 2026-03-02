@@ -97,13 +97,26 @@ class ChatRequest(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _resolve_api_key(header_key: str | None) -> str:
-    """Return the API key from the request header or environment, or raise 400."""
-    key = header_key or os.environ.get("OPENAI_API_KEY", "")
+def _resolve_api_key(
+    model: str,
+    openai_header: str | None = None,
+    gemini_header: str | None = None,
+) -> str:
+    """Return the API key for the provider that owns *model*, or raise 400."""
+    if _is_gemini_model(model):
+        key = gemini_header or os.environ.get("GEMINI_API_KEY", "")
+        if not key:
+            raise HTTPException(
+                status_code=400,
+                detail="No Gemini API key provided. Set GEMINI_API_KEY in .env or pass X-Gemini-Key header.",
+            )
+        return key
+
+    key = openai_header or os.environ.get("OPENAI_API_KEY", "")
     if not key:
         raise HTTPException(
             status_code=400,
-            detail="No API key provided. Set OPENAI_API_KEY in .env or pass X-OpenAI-Key header.",
+            detail="No OpenAI API key provided. Set OPENAI_API_KEY in .env or pass X-OpenAI-Key header.",
         )
     return key
 
@@ -266,7 +279,14 @@ def get_note(course: str, filename: str):
 
 AVAILABLE_MODELS = {
     "openai": ["gpt-5.2", "gpt-5-mini", "gpt-5-nano"],
+    "google": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
 }
+
+_GEMINI_MODELS = set(AVAILABLE_MODELS["google"])
+
+
+def _is_gemini_model(model: str) -> bool:
+    return model in _GEMINI_MODELS
 
 
 @app.get("/api/providers")
@@ -278,8 +298,9 @@ def get_providers():
 def post_chat(
     body: ChatRequest,
     x_openai_key: str | None = Header(default=None),
+    x_gemini_key: str | None = Header(default=None),
 ):
-    api_key = _resolve_api_key(x_openai_key)
+    api_key = _resolve_api_key(body.model, x_openai_key, x_gemini_key)
 
     try:
         system_text = read_prompt(body.system_prompt)
@@ -369,6 +390,7 @@ def post_generate_notes(
     filename: str,
     body: GenerateRequest | None = None,
     x_openai_key: str | None = Header(default=None),
+    x_gemini_key: str | None = Header(default=None),
 ):
     _require_pdf(course, filename)
     if is_job_running("notes", course, filename):
@@ -379,8 +401,8 @@ def post_generate_notes(
         delete_note(course, notes_filename(filename))
         clear_job_status("notes", course, filename)
 
-    api_key = _resolve_api_key(x_openai_key)
     model = body.model if body else "gpt-5-mini"
+    api_key = _resolve_api_key(model, x_openai_key, x_gemini_key)
     start_lecture_notes(course, filename, api_key, model)
     return {"status": "started"}
 
@@ -403,12 +425,13 @@ def post_generate_principles(
     filename: str,
     body: GenerateRequest | None = None,
     x_openai_key: str | None = Header(default=None),
+    x_gemini_key: str | None = Header(default=None),
 ):
     _require_pdf(course, filename)
     if is_job_running("principles", course, filename):
         raise HTTPException(status_code=409, detail="Generation already in progress")
 
-    api_key = _resolve_api_key(x_openai_key)
     model = body.model if body else "gpt-5-mini"
+    api_key = _resolve_api_key(model, x_openai_key, x_gemini_key)
     start_core_principles(course, filename, api_key, model)
     return {"status": "started"}

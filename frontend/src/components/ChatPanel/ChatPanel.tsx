@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProviders, sendChatMessage } from '../../api/chat';
+import { sendChatMessage } from '../../api/chat';
 import { fetchPrompts } from '../../api/prompts';
 import type { ChatContext, ChatMessage as ChatMessageType } from '../../types';
 import ChatMessage from './ChatMessage';
 import ContextIndicator from './ContextIndicator';
+import ModelSelect from '../common/ModelSelect';
 
 interface Props {
   course: string;
@@ -36,14 +37,6 @@ export default function ChatPanel({
   const abortRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const { data: providers } = useQuery({
-    queryKey: ['providers'],
-    queryFn: fetchProviders,
-    staleTime: 60_000,
-  });
-
-  const allModels = providers ? Object.values(providers).flat() : ['gpt-5.2', 'gpt-5-mini', 'gpt-5-nano'];
 
   const CHAT_PROMPTS = ['default_explainer.txt', 'socratic_tutor.txt', 'exam_analyzer.txt'];
 
@@ -138,15 +131,11 @@ export default function ChatPanel({
       <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
         <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">AI Chat</h3>
         <div className="flex items-center gap-2">
-          <select
+          <ModelSelect
             value={model}
-            onChange={(e) => setModel(e.target.value)}
+            onChange={setModel}
             className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-          >
-            {allModels.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+          />
           <button
             onClick={onClose}
             className="rounded p-1 text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-200"

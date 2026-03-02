@@ -7,6 +7,7 @@ import {
 } from '../../api/notes';
 import type { GenerateStatus } from '../../types';
 import MarkdownRenderer from '../common/MarkdownRenderer';
+import ModelSelect from '../common/ModelSelect';
 import { getSlideSection } from '../../utils/parseSlideNotes';
 
 interface Props {
@@ -151,15 +152,11 @@ export default function SlideNotesPane({ course, filename, page }: Props) {
               <label className="text-xs text-zinc-500 dark:text-zinc-400">
                 Model:
               </label>
-              <select
+              <ModelSelect
                 value={model}
-                onChange={(e) => setModel(e.target.value)}
+                onChange={setModel}
                 className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-              >
-                <option value="gpt-5.2">gpt-5.2</option>
-                <option value="gpt-5-mini">gpt-5-mini</option>
-                <option value="gpt-5-nano">gpt-5-nano</option>
-              </select>
+              />
             </div>
             <button
               onClick={() => generateMutation.mutate()}

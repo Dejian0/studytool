@@ -3,11 +3,15 @@ from __future__ import annotations
 import base64
 from collections.abc import Generator
 
-from openai import OpenAI
+from lib.providers import get_provider
 
 
 def encode_images(page_bytes_list: list[bytes]) -> list[dict]:
-    """Convert raw PNG byte buffers into OpenAI vision content blocks."""
+    """Convert raw PNG byte buffers into OpenAI-style vision content blocks.
+
+    These blocks are understood by all providers (each provider converts
+    them internally to its native format).
+    """
     blocks: list[dict] = []
     for png in page_bytes_list:
         b64 = base64.b64encode(png).decode("ascii")
@@ -26,7 +30,7 @@ def build_messages(
     user_text: str,
     image_blocks: list[dict],
 ) -> list[dict]:
-    """Assemble the full messages array for the OpenAI chat completions API.
+    """Assemble the full messages array in OpenAI format.
 
     Prior history is sent as plain text (no old images re-sent).  Only the
     current user turn carries the active-context slide images.
@@ -43,17 +47,9 @@ def stream_chat(
     model: str,
     messages: list[dict],
 ) -> Generator[str, None, None]:
-    """Stream a chat completion and yield text deltas as they arrive."""
-    client = OpenAI(api_key=api_key)
-    stream = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        stream=True,
-    )
-    for chunk in stream:
-        delta = chunk.choices[0].delta
-        if delta.content:
-            yield delta.content
+    """Stream a chat completion via the appropriate provider."""
+    provider = get_provider(model)
+    return provider.stream_chat(api_key, model, messages)
 
 
 def chat_sync(
@@ -61,10 +57,9 @@ def chat_sync(
     model: str,
     messages: list[dict],
 ) -> str:
-    """Send a chat completion and return the full response text (non-streaming)."""
-    client = OpenAI(api_key=api_key)
-    response = client.chat.completions.create(model=model, messages=messages)
-    return response.choices[0].message.content or ""
+    """Send a chat completion via the appropriate provider (non-streaming)."""
+    provider = get_provider(model)
+    return provider.chat_sync(api_key, model, messages)
 
 
 def analyze_exams(
@@ -75,16 +70,7 @@ def analyze_exams(
 ) -> str:
     """Send all exam page images with the analyzer prompt (non-streaming)."""
     image_blocks = encode_images(exam_images)
-    user_content: list[dict] = [
-        {"type": "text", "text": "Analyze the following exam papers."},
-        *image_blocks,
-    ]
-    client = OpenAI(api_key=api_key)
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ],
+    messages = build_messages(
+        system_prompt, [], "Analyze the following exam papers.", image_blocks
     )
-    return response.choices[0].message.content or ""
+    return chat_sync(api_key, model, messages)

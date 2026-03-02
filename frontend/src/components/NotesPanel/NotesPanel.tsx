@@ -9,6 +9,7 @@ import {
 } from '../../api/notes';
 import type { GenerateStatus } from '../../types';
 import MarkdownRenderer from '../common/MarkdownRenderer';
+import ModelSelect from '../common/ModelSelect';
 
 interface Props {
   course: string;
@@ -93,15 +94,11 @@ export default function NotesPanel({ course, filename, type }: Props) {
           {type === 'notes' && (
             <div className="flex shrink-0 items-center justify-end gap-2 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
               <label className="text-xs text-zinc-500 dark:text-zinc-400">Model:</label>
-              <select
+              <ModelSelect
                 value={model}
-                onChange={(e) => setModel(e.target.value)}
+                onChange={setModel}
                 className="rounded border border-zinc-300 bg-white px-1.5 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-              >
-                <option value="gpt-5.2">gpt-5.2</option>
-                <option value="gpt-5-mini">gpt-5-mini</option>
-                <option value="gpt-5-nano">gpt-5-nano</option>
-              </select>
+              />
               <button
                 onClick={() => {
                   if (!confirm('Regenerate lecture notes from scratch? This will replace the existing notes.')) return;
@@ -185,16 +182,11 @@ export default function NotesPanel({ course, filename, type }: Props) {
 
           <div className="flex items-center gap-2">
             <label className="text-xs text-zinc-500 dark:text-zinc-400">Model:</label>
-            <select
+            <ModelSelect
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={setModel}
               className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-            >
-              <option value="gpt-5.2">gpt-5.2</option>
-              <option value="gpt-5-mini">gpt-5-mini</option>
-              <option value="gpt-5-nano">gpt-5-nano</option>
-              
-            </select>
+            />
           </div>
 
           <button
