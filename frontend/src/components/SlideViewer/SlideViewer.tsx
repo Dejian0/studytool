@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPageCount, fetchPageText, slideImageUrl } from '../../api/slides';
 import ErrorMessage from '../ErrorMessage';
@@ -10,19 +10,21 @@ import CropPreview from '../RegionCrop/CropPreview';
 interface Props {
   course: string;
   filename: string;
+  page: number;
+  onPageChange: (page: number) => void;
   onSwitchToNotes?: () => void;
 }
 
-export default function SlideViewer({ course, filename, onSwitchToNotes }: Props) {
-  const [page, setPage] = useState(1);
+export default function SlideViewer({ course, filename, page, onPageChange, onSwitchToNotes }: Props) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [pageInput, setPageInput] = useState('1');
+  const [pageInput, setPageInput] = useState(String(page));
   const [selectedBlockIds, setSelectedBlockIds] = useState<Set<number>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
   const [imgRect, setImgRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const [imgElement, setImgElement] = useState<HTMLImageElement | null>(null);
   const [cropMode, setCropMode] = useState(false);
   const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const imgRef = useCallback((node: HTMLImageElement | null) => {
     setImgElement(node);
@@ -40,11 +42,6 @@ export default function SlideViewer({ course, filename, onSwitchToNotes }: Props
     queryFn: () => fetchPageText(course, filename, page),
     enabled: totalPages > 0,
   });
-
-  useEffect(() => {
-    setPage(1);
-    setPageInput('1');
-  }, [course, filename]);
 
   useEffect(() => {
     setPageInput(String(page));
@@ -72,6 +69,7 @@ export default function SlideViewer({ course, filename, onSwitchToNotes }: Props
     }
     const observer = new ResizeObserver(update);
     observer.observe(imgElement);
+    if (containerRef.current) observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [imgElement]);
 
@@ -79,10 +77,10 @@ export default function SlideViewer({ course, filename, onSwitchToNotes }: Props
     (p: number) => {
       if (totalPages === 0) return;
       const clamped = Math.max(1, Math.min(p, totalPages));
-      setPage(clamped);
+      onPageChange(clamped);
       setImageLoaded(false);
     },
-    [totalPages],
+    [totalPages, onPageChange],
   );
 
   const prev = useCallback(() => goTo(page - 1), [goTo, page]);
@@ -178,6 +176,7 @@ export default function SlideViewer({ course, filename, onSwitchToNotes }: Props
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Slide image area */}
       <div
+        ref={containerRef}
         className="relative flex flex-1 items-center justify-center overflow-auto bg-zinc-200/50 p-4 dark:bg-zinc-900/50"
         onClick={clearSelection}
       >

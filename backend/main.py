@@ -61,7 +61,7 @@ class UpdatePromptRequest(BaseModel):
     content: str
 
 class GenerateRequest(BaseModel):
-    model: str = "gpt-4o"
+    model: str = "gpt-5.2"
 
 
 # ---------------------------------------------------------------------------
@@ -130,6 +130,8 @@ async def upload_files(course: str, folder: str, files: list[UploadFile]):
 
     saved = []
     for f in files:
+        if not f.filename:
+            raise HTTPException(status_code=400, detail="Uploaded file is missing a filename")
         data = await f.read()
         save_uploaded_file(course, folder, f.filename, data)
         saved.append(f.filename)

@@ -185,22 +185,22 @@ def _run_lecture_notes(
     api_key: str,
     model: str,
 ) -> None:
-    notes_name = _notes_filename(filename)
-    system_prompt = _load_system_prompt()
-
-    existing_content = ""
     try:
-        existing_content = filesystem.read_note(course, notes_name)
-    except FileNotFoundError:
-        pass
+        notes_name = _notes_filename(filename)
+        system_prompt = _load_system_prompt()
 
-    completed = _count_completed_slides(existing_content)
-    running_context = _extract_last_context(existing_content) if completed > 0 else ""
+        existing_content = ""
+        try:
+            existing_content = filesystem.read_note(course, notes_name)
+        except FileNotFoundError:
+            pass
 
-    if completed == 0:
-        existing_content = f"# Lecture Notes: {Path(filename).stem}\n\n"
+        completed = _count_completed_slides(existing_content)
+        running_context = _extract_last_context(existing_content) if completed > 0 else ""
 
-    try:
+        if completed == 0:
+            existing_content = f"# Lecture Notes: {Path(filename).stem}\n\n"
+
         for slide_num in range(completed + 1, total_slides + 1):
             _set_job(key, {
                 "status": "running",
@@ -243,9 +243,11 @@ def _run_lecture_notes(
 
     except Exception:
         logger.exception("Lecture notes generation failed for %s/%s", course, filename)
+        with _lock:
+            current = _jobs.get(key, {}).get("current_slide", 0)
         _set_job(key, {
             "status": "failed",
-            "current_slide": _jobs.get(key, {}).get("current_slide", 0),
+            "current_slide": current,
             "total_slides": total_slides,
             "error": "Generation failed. Check server logs for details.",
         })
@@ -301,20 +303,20 @@ def _run_core_principles(
     api_key: str,
     model: str,
 ) -> None:
-    notes_name = _notes_filename(filename)
-
     try:
-        lecture_notes = filesystem.read_note(course, notes_name)
-    except FileNotFoundError:
-        _set_job(key, {
-            "status": "failed",
-            "current_slide": 0,
-            "total_slides": 1,
-            "error": "Lecture notes must be generated first.",
-        })
-        return
+        notes_name = _notes_filename(filename)
 
-    try:
+        try:
+            lecture_notes = filesystem.read_note(course, notes_name)
+        except FileNotFoundError:
+            _set_job(key, {
+                "status": "failed",
+                "current_slide": 0,
+                "total_slides": 1,
+                "error": "Lecture notes must be generated first.",
+            })
+            return
+
         system_prompt = (
             "You are an expert engineering professor creating a concise reference "
             "sheet for students. Use $...$ for inline math and $$...$$ for display "

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Sidebar from './components/Sidebar/Sidebar';
 import SlideViewer from './components/SlideViewer/SlideViewer';
@@ -13,6 +13,7 @@ export default function App() {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('slides');
+  const [slidePages, setSlidePages] = useState<Record<string, number>>({});
 
   function handleSelectCourse(course: string) {
     setSelectedCourse(course);
@@ -24,6 +25,13 @@ export default function App() {
     setSelectedFile(file);
     setActiveTab('slides');
   }
+
+  const slidePageKey = selectedCourse && selectedFile ? `${selectedCourse}/${selectedFile}` : '';
+  const slidePage = slidePages[slidePageKey] ?? 1;
+  const setSlidePage = useCallback(
+    (page: number) => setSlidePages((prev) => ({ ...prev, [slidePageKey]: page })),
+    [slidePageKey],
+  );
 
   useEffect(() => {
     setActiveTab('slides');
@@ -95,6 +103,8 @@ export default function App() {
                 <SlideViewer
                   course={selectedCourse}
                   filename={selectedFile}
+                  page={slidePage}
+                  onPageChange={setSlidePage}
                   onSwitchToNotes={() => setActiveTab('notes')}
                 />
               )}

@@ -149,10 +149,10 @@ export default function NotesPanel({ course, filename, type }: Props) {
               onChange={(e) => setModel(e.target.value)}
               className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
             >
-              <option value="gpt-4o">gpt-4o</option>
-              <option value="gpt-4o-mini">gpt-4o-mini</option>
-              <option value="gpt-4.1">gpt-4.1</option>
-              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+              <option value="gpt-5.2">gpt-5.2</option>
+              <option value="gpt-5-mini">gpt-5-mini</option>
+              <option value="gpt-5-nano">gpt-5-nano</option>
+              
             </select>
           </div>
 
