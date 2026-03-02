@@ -97,6 +97,9 @@ export default function App() {
         onSelectCourse={handleSelectCourse}
         selectedFile={selectedFile}
         onSelectFile={handleSelectFile}
+        onDeleteFile={(file) => {
+          if (selectedFile === file) setSelectedFile(null);
+        }}
       />
 
       <main className="relative flex flex-1 flex-col overflow-hidden">

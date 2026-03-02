@@ -22,6 +22,9 @@ except ImportError:
 from lib.filesystem import (
     COURSES_DIR,
     create_course,
+    delete_file,
+    delete_note,
+    delete_notes_for_pdf,
     ensure_base_dirs,
     get_file_path,
     list_courses,
@@ -35,6 +38,7 @@ from lib.filesystem import (
 )
 from lib.pdf_viewer import extract_page_text, get_page_count, render_page
 from lib.notes_pipeline import (
+    clear_job_status,
     extract_slide_section,
     get_job_status,
     is_job_running,
@@ -69,6 +73,7 @@ class UpdatePromptRequest(BaseModel):
 
 class GenerateRequest(BaseModel):
     model: str = "gpt-5.2"
+    force: bool = False
 
 
 class ChatContext(BaseModel):
@@ -161,6 +166,23 @@ async def upload_files(course: str, folder: str, files: list[UploadFile]):
         saved.append(f.filename)
 
     return {"uploaded": saved}
+
+
+@app.delete("/api/courses/{course}/files/{folder}/{filename}")
+def delete_course_file(course: str, folder: str, filename: str):
+    _require_course(course)
+    if folder not in ("slides", "exams"):
+        raise HTTPException(status_code=400, detail="Folder must be 'slides' or 'exams'")
+
+    path = get_file_path(course, folder, filename)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"File '{filename}' not found in {course}/{folder}/")
+
+    delete_file(course, folder, filename)
+    if folder == "slides":
+        delete_notes_for_pdf(course, filename)
+
+    return {"deleted": filename}
 
 
 # ---------------------------------------------------------------------------
@@ -351,6 +373,11 @@ def post_generate_notes(
     _require_pdf(course, filename)
     if is_job_running("notes", course, filename):
         raise HTTPException(status_code=409, detail="Generation already in progress")
+
+    force = body.force if body else False
+    if force:
+        delete_note(course, notes_filename(filename))
+        clear_job_status("notes", course, filename)
 
     api_key = _resolve_api_key(x_openai_key)
     model = body.model if body else "gpt-4o"

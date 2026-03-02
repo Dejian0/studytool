@@ -16,6 +16,13 @@ export function fetchCourseFiles(course: string, folder: 'slides' | 'exams'): Pr
   return apiFetch<string[]>(`/courses/${encodeURIComponent(course)}/files/${folder}`);
 }
 
+export function deleteFile(course: string, folder: string, filename: string): Promise<{ deleted: string }> {
+  return apiFetch(
+    `/courses/${encodeURIComponent(course)}/files/${folder}/${encodeURIComponent(filename)}`,
+    { method: 'DELETE' },
+  );
+}
+
 export async function uploadFiles(course: string, folder: string, files: File[]): Promise<{ uploaded: string[] }> {
   const form = new FormData();
   for (const f of files) {

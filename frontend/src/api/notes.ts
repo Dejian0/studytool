@@ -5,13 +5,14 @@ export function startGenerateNotes(
   course: string,
   filename: string,
   model = 'gpt-4o',
+  force = false,
 ): Promise<{ status: string }> {
   return apiFetch(
     `/generate-notes/${encodeURIComponent(course)}/${encodeURIComponent(filename)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model }),
+      body: JSON.stringify({ model, force }),
     },
   );
 }

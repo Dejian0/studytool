@@ -12,6 +12,7 @@ interface Props {
   onSelectCourse: (course: string) => void;
   selectedFile: string | null;
   onSelectFile: (file: string) => void;
+  onDeleteFile?: (file: string) => void;
 }
 
 export default function Sidebar({
@@ -21,6 +22,7 @@ export default function Sidebar({
   onSelectCourse,
   selectedFile,
   onSelectFile,
+  onDeleteFile,
 }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -66,6 +68,7 @@ export default function Sidebar({
               course={selectedCourse}
               selected={selectedFile}
               onSelect={onSelectFile}
+              onDelete={onDeleteFile}
             />
             <UploadZone course={selectedCourse} />
           </>

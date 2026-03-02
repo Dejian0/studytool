@@ -104,6 +104,11 @@ def is_job_running(job_type: str, course: str, filename: str) -> bool:
     return job is not None and job["status"] == "running"
 
 
+def clear_job_status(job_type: str, course: str, filename: str) -> None:
+    """Remove cached job status so the next status poll returns idle/running."""
+    _clear_job(_job_key(job_type, course, filename))
+
+
 # ---------------------------------------------------------------------------
 # Resumability helpers
 # ---------------------------------------------------------------------------

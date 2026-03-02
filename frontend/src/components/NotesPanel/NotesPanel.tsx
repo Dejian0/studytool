@@ -48,9 +48,11 @@ export default function NotesPanel({ course, filename, type }: Props) {
   });
 
   const generateNotesMutation = useMutation({
-    mutationFn: () => startGenerateNotes(course, filename, model),
+    mutationFn: ({ force }: { force?: boolean } = {}) =>
+      startGenerateNotes(course, filename, model, force),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['generateStatus', 'notes', course, filename] });
+      queryClient.invalidateQueries({ queryKey: ['note', course] });
     },
   });
 
@@ -63,7 +65,17 @@ export default function NotesPanel({ course, filename, type }: Props) {
     },
   });
 
-  const mutation = type === 'notes' ? generateNotesMutation : generatePrinciplesMutation;
+  const isPending = type === 'notes' ? generateNotesMutation.isPending : generatePrinciplesMutation.isPending;
+  const mutationError = type === 'notes' ? generateNotesMutation.error : generatePrinciplesMutation.error;
+
+  function handleGenerate(force = false) {
+    if (type === 'notes') {
+      generateNotesMutation.mutate({ force });
+    } else {
+      generatePrinciplesMutation.mutate();
+    }
+  }
+
   const isRunning = status?.status === 'running';
   const isCompleted = status?.status === 'completed';
   const isFailed = status?.status === 'failed';
@@ -77,18 +89,37 @@ export default function NotesPanel({ course, filename, type }: Props) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {isCompleted && (
-        <div className="flex-1 overflow-auto p-6">
-          {noteLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Spinner />
-              <span className="ml-2 text-zinc-500">Loading notes...</span>
+        <>
+          {type === 'notes' && (
+            <div className="flex shrink-0 items-center justify-end border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
+              <button
+                onClick={() => {
+                  if (!confirm('Regenerate lecture notes from scratch? This will replace the existing notes.')) return;
+                  generateNotesMutation.mutate({ force: true });
+                }}
+                disabled={generateNotesMutation.isPending}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5">
+                  <path fillRule="evenodd" d="M13.836 2.477a.75.75 0 0 1 .75.75v3.182a.75.75 0 0 1-.75.75h-3.182a.75.75 0 0 1 0-1.5h1.37l-.84-.841a4.5 4.5 0 0 0-7.08.932.75.75 0 0 1-1.3-.75 6 6 0 0 1 9.44-1.242l.842.84V3.227a.75.75 0 0 1 .75-.75Zm-.911 7.5A.75.75 0 0 1 13.199 11a6 6 0 0 1-9.44 1.241l-.84-.84v1.371a.75.75 0 0 1-1.5 0V9.591a.75.75 0 0 1 .75-.75H5.35a.75.75 0 0 1 0 1.5H3.98l.841.841a4.5 4.5 0 0 0 7.08-.932.75.75 0 0 1 1.025-.273Z" clipRule="evenodd" />
+                </svg>
+                {generateNotesMutation.isPending ? 'Starting...' : 'Regenerate'}
+              </button>
             </div>
-          ) : noteData ? (
-            <MarkdownRenderer content={noteData.content} />
-          ) : (
-            <p className="text-zinc-500">Notes file not found.</p>
           )}
-        </div>
+          <div className="flex-1 overflow-auto p-6">
+            {noteLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Spinner />
+                <span className="ml-2 text-zinc-500">Loading notes...</span>
+              </div>
+            ) : noteData ? (
+              <MarkdownRenderer content={noteData.content} />
+            ) : (
+              <p className="text-zinc-500">Notes file not found.</p>
+            )}
+          </div>
+        </>
       )}
 
       {isRunning && (
@@ -121,7 +152,7 @@ export default function NotesPanel({ course, filename, type }: Props) {
             </p>
           </div>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={() => handleGenerate()}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Retry
@@ -157,11 +188,11 @@ export default function NotesPanel({ course, filename, type }: Props) {
           </div>
 
           <button
-            onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
+            onClick={() => handleGenerate()}
+            disabled={isPending}
             className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {mutation.isPending
+            {isPending
               ? 'Starting...'
               : type === 'notes'
                 ? 'Generate Lecture Notes'
@@ -174,9 +205,9 @@ export default function NotesPanel({ course, filename, type }: Props) {
             </p>
           )}
 
-          {mutation.isError && (
+          {mutationError && (
             <p className="text-sm text-red-600 dark:text-red-400">
-              {(mutation.error as Error).message}
+              {(mutationError as Error).message}
             </p>
           )}
         </div>

@@ -143,3 +143,22 @@ def read_note(course: str, filename: str) -> str:
     """Read and return the content of a note file."""
     path = COURSES_DIR / course / "notes" / filename
     return path.read_text(encoding="utf-8")
+
+
+def delete_file(course: str, subfolder: str, filename: str) -> None:
+    """Remove a file from courses/<course>/<subfolder>/<filename>."""
+    path = COURSES_DIR / course / subfolder / filename
+    path.unlink(missing_ok=True)
+
+
+def delete_note(course: str, filename: str) -> None:
+    """Remove a single note file from courses/<course>/notes/."""
+    path = COURSES_DIR / course / "notes" / filename
+    path.unlink(missing_ok=True)
+
+
+def delete_notes_for_pdf(course: str, pdf_name: str) -> None:
+    """Remove lecture notes and core principles files associated with a PDF."""
+    stem = Path(pdf_name).stem
+    for suffix in ("_lecture_notes.md", "_core_principles.md"):
+        (COURSES_DIR / course / "notes" / (stem + suffix)).unlink(missing_ok=True)
