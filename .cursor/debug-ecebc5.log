@@ -1,0 +1,1 @@
+{"sessionId": "ecebc5", "location": "gemini_provider.py:chat_sync", "message": "chat_sync_called", "data": {"model": "gemini-3-flash-preview", "num_contents": 1, "has_system": true}, "timestamp": 1772463256024, "hypothesisId": "H1,H3"}

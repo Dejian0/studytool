@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchCourses, createCourse, fetchCourseFiles, deleteFile } from '../../api/courses';
+import { fetchCourses, createCourse, fetchCourseFiles, deleteFile, uploadFiles } from '../../api/courses';
 import ErrorMessage from '../ErrorMessage';
 
 interface Props {
@@ -63,6 +63,7 @@ export default function CourseTree({
   }
 
   function handleCourseClick(course: string) {
+    onSelectCourse(course);
     toggleExpand(course);
   }
 
@@ -166,6 +167,7 @@ function CourseFiles({
   onDelete?: (file: string) => void;
 }) {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: files = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['files', course, 'slides'],
@@ -182,10 +184,25 @@ function CourseFiles({
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: (uploadedFiles: File[]) => uploadFiles(course, 'slides', uploadedFiles),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', course, 'slides'] });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+  });
+
   function handleDelete(e: React.MouseEvent, filename: string) {
     e.stopPropagation();
     if (!confirm(`Delete "${filename}" and its associated notes?`)) return;
     deleteMutation.mutate(filename);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const pdfs = Array.from(fileList).filter((f) => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+    if (pdfs.length > 0) uploadMutation.mutate(pdfs);
   }
 
   if (isError) {
@@ -200,9 +217,31 @@ function CourseFiles({
     return <p className="py-1 pl-7 text-xs text-zinc-500">Loading...</p>;
   }
 
-  if (files.length === 0) {
-    return <p className="py-1 pl-7 text-xs text-zinc-500">No slides yet</p>;
-  }
+  const addButton = (
+    <li>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploadMutation.isPending}
+        className="flex w-full items-center gap-1.5 rounded py-1 pl-7 pr-2 text-left text-sm text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-3.5 shrink-0">
+          <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+        </svg>
+        {uploadMutation.isPending ? 'Uploading...' : 'Add slides'}
+      </button>
+      {uploadMutation.isError && (
+        <p className="pl-7 text-xs text-red-500">{(uploadMutation.error as Error).message}</p>
+      )}
+    </li>
+  );
 
   return (
     <ul className="space-y-0.5 py-0.5">
@@ -238,6 +277,7 @@ function CourseFiles({
           </button>
         </li>
       ))}
+      {addButton}
     </ul>
   );
 }
