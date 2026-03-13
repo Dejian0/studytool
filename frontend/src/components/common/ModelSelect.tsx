@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProviders } from '../../api/chat';
 import type { Providers } from '../../types';
@@ -33,7 +34,7 @@ interface Props {
   className?: string;
 }
 
-export default function ModelSelect({ value, onChange, className }: Props) {
+export default memo(function ModelSelect({ value, onChange, className }: Props) {
   const { data: providers } = useQuery({
     queryKey: ['providers'],
     queryFn: fetchProviders,
@@ -57,4 +58,4 @@ export default function ModelSelect({ value, onChange, className }: Props) {
       ))}
     </select>
   );
-}
+});

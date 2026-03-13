@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import MarkdownRenderer from '../common/MarkdownRenderer';
 
 interface Props {
@@ -6,7 +7,7 @@ interface Props {
   isStreaming?: boolean;
 }
 
-export default function ChatMessage({ role, content, isStreaming }: Props) {
+export default memo(function ChatMessage({ role, content, isStreaming }: Props) {
   if (role === 'user') {
     return (
       <div className="flex justify-end">
@@ -27,4 +28,4 @@ export default function ChatMessage({ role, content, isStreaming }: Props) {
       </div>
     </div>
   );
-}
+});

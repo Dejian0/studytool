@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -20,7 +20,7 @@ function normalizeLatexDelimiters(text: string): string {
   return text;
 }
 
-export default function MarkdownRenderer({ content, className = '' }: Props) {
+export default memo(function MarkdownRenderer({ content, className = '' }: Props) {
   const normalized = useMemo(() => normalizeLatexDelimiters(content), [content]);
 
   return (
@@ -44,4 +44,4 @@ export default function MarkdownRenderer({ content, className = '' }: Props) {
       </ReactMarkdown>
     </div>
   );
-}
+});

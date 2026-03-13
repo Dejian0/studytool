@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import type { ChatContext } from '../../types';
 
 interface Props {
   context: ChatContext;
+  page: number;
   onUpdate: (context: ChatContext) => void;
 }
 
-export default function ContextIndicator({ context, onUpdate }: Props) {
+export default memo(function ContextIndicator({ context, page, onUpdate }: Props) {
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,7 +21,7 @@ export default function ContextIndicator({ context, onUpdate }: Props) {
 
   const items: { label: string; onRemove?: () => void; thumb?: string | null }[] = [];
 
-  items.push({ label: `Slide ${context.page} notes` });
+  items.push({ label: `Slide ${page} notes` });
 
   if (context.selected_text) {
     const preview =
@@ -68,4 +69,4 @@ export default function ContextIndicator({ context, onUpdate }: Props) {
       ))}
     </div>
   );
-}
+});

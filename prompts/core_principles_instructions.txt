@@ -2,6 +2,14 @@ Based on these complete lecture notes, extract the core principles of this lectu
 
 Principles fall into two categories. Identify which category each principle belongs to and format it accordingly:
 
+Math rendering requirements:
+- Every equation must be valid KaTeX-compatible LaTeX.
+- Use $...$ only for short inline symbols or expressions.
+- Put full equations on their own lines using $$...$$.
+- Do not put explanatory prose inside math delimiters.
+- Do not use custom macros or unsupported LaTeX environments.
+- If a formula is complicated, prefer simpler notation that is still technically correct and easy to render.
+
 ### Category A -- Theoretical / Mathematical Concepts
 For principles that can be expressed as definitions and equations, provide:
 1. The principle/concept name

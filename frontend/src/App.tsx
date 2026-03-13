@@ -5,6 +5,7 @@ import SlideViewer from './components/SlideViewer/SlideViewer';
 import SlideNotesPane from './components/SlideNotesPane/SlideNotesPane';
 import NotesPanel from './components/NotesPanel/NotesPanel';
 import ChatPanel from './components/ChatPanel/ChatPanel';
+import ResizeHandle from './components/common/ResizeHandle';
 import { fetchGenerateNotesStatus } from './api/notes';
 import type { GenerateStatus, ChatMessage, ChatContext } from './types';
 
@@ -20,6 +21,7 @@ export default function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatContext, setChatContext] = useState<ChatContext | null>(null);
+  const [splitFraction, setSplitFraction] = useState(0.55);
 
   function handleSelectCourse(course: string) {
     setSelectedCourse(course);
@@ -70,6 +72,8 @@ export default function App() {
       include_slide_notes: true,
     };
   }
+
+  const handleChatClose = useCallback(() => setChatOpen(false), []);
 
   const handleAskAI = useCallback(
     (partialContext?: { selected_text?: string; cropped_image_base64?: string }) => {
@@ -162,8 +166,7 @@ export default function App() {
             <div className="flex flex-1 overflow-hidden">
               {activeTab === 'slides' && (
                 <>
-                  {/* Left: slide viewer */}
-                  <div className="flex min-w-0 flex-[55] overflow-hidden">
+                  <div className="flex min-w-0 overflow-hidden" style={{ flex: splitFraction }}>
                     <SlideViewer
                       course={selectedCourse}
                       filename={selectedFile}
@@ -173,8 +176,8 @@ export default function App() {
                       onAskAI={handleAskAI}
                     />
                   </div>
-                  {/* Right: per-slide notes + chat overlay */}
-                  <div className="relative flex min-w-0 flex-[45] overflow-hidden">
+                  <ResizeHandle onResize={setSplitFraction} />
+                  <div className="relative flex min-w-0 overflow-hidden" style={{ flex: 1 - splitFraction }}>
                     <SlideNotesPane
                       course={selectedCourse}
                       filename={selectedFile}
@@ -189,7 +192,7 @@ export default function App() {
                         messages={chatMessages}
                         onMessagesChange={setChatMessages}
                         onContextChange={setChatContext}
-                        onClose={() => setChatOpen(false)}
+                        onClose={handleChatClose}
                       />
                     )}
                   </div>
@@ -211,7 +214,7 @@ export default function App() {
                       messages={chatMessages}
                       onMessagesChange={setChatMessages}
                       onContextChange={setChatContext}
-                      onClose={() => setChatOpen(false)}
+                      onClose={handleChatClose}
                     />
                   )}
                 </div>
@@ -232,7 +235,7 @@ export default function App() {
                       messages={chatMessages}
                       onMessagesChange={setChatMessages}
                       onContextChange={setChatContext}
-                      onClose={() => setChatOpen(false)}
+                      onClose={handleChatClose}
                     />
                   )}
                 </div>

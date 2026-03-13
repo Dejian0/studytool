@@ -164,7 +164,7 @@ export default function ChatPanel({
       </div>
 
       {/* Context indicator */}
-      <ContextIndicator context={context} onUpdate={onContextChange} />
+      <ContextIndicator context={context} page={page} onUpdate={onContextChange} />
 
       {/* Messages */}
       <div ref={messagesRef} className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
